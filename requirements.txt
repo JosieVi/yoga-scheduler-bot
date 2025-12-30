@@ -1,0 +1,4 @@
+aiogram
+aiogram-calendar
+pytz
+python-dotenv
