@@ -13,6 +13,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import Message
+from aiogram import BaseMiddleware
 
 # --- CONFIGURATION ---
 load_dotenv()
@@ -43,6 +44,15 @@ yoga_sessions = {}
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
+
+class AccessMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event, data):
+        user = data.get("event_from_user")
+        if user and user.username and user.username.lower() in USERS_CONFIG:
+            return await handler(event, data)
+        return
+
+dp.update.outer_middleware(AccessMiddleware())
 
 class YogaState(StatesGroup):
     waiting_for_time = State()
