@@ -63,23 +63,23 @@ def get_week_keyboard():
     builder = InlineKeyboardBuilder()
     now = datetime.now()
     
-    # Determine how many days are left until the end of the week (Sunday)
-    days_until_sunday = 6 - now.weekday()
+    # Days of the week abbreviations
     weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     
-    # Create buttons only until the end of the current week
-    for i in range(days_until_sunday + 1):
+    # Generate exactly 7 days starting from today
+    for i in range(7):
         day = now + timedelta(days=i)
         date_val = day.strftime('%Y-%m-%d')
-        # Format: "Пн 25.01"
+        
+        # Format label: "Mon 24.01"
         label = f"{weekdays[day.weekday()]} {day.strftime('%d.%m')}"
         
         builder.button(text=label, callback_data=f"day_{date_val}")
     
-    # Arrange 4 buttons in a row
+    # Arrange buttons in rows of 4
     builder.adjust(4)
     
-    # Move the cancel button to a separate bottom row
+    # Add a cancel button at the bottom row
     builder.row(types.InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_calendar"))
     
     return builder.as_markup()
