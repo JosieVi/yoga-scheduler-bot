@@ -62,7 +62,7 @@ pip install -r requirements.txt
 ```bash
 python -m venv venv
 source venv/bin/activate  # for macOS/Linux
-venv\Scripts\activate     # for Windows
+source venv/Scripts/activate  # for Windows
 
 ```
 
@@ -97,6 +97,45 @@ _The key is the Telegram username (in lowercase), and the value is the UTC offse
 ```bash
 python main.py
 
+```
+
+---
+
+## 🚀 Deployment on Google Cloud (VM Instance)
+
+### 1. Requirements
+
+- **Machine:** Google Cloud VM (e2-micro for Free Tier).
+- **Environment:** Python 3.9+, `venv` (recommended).
+- **Firewall:** Port 22 (SSH) open for IAP/Personal IP.
+
+### 2. Management Commands
+
+#### 🔹 Start the Bot
+
+To run the bot 24/7 even after closing the SSH session:
+
+```bash
+# Navigate to project folder
+cd ~/yoga-bot
+
+# Activate virtual environment (if used)
+source venv/bin/activate
+
+# Start in background with unbuffered logging
+nohup python3 -u main.py > bot_log.txt 2>&1 &
+
+# Check if the bot process is currently running:
+ps aux | grep main.py
+
+# Monitor real-time logs (errors, messages, interactions):
+tail -f bot_log.txt
+(Press Ctrl + C to exit log view)
+
+# Update from GitHub
+git reset --hard HEAD    # Discard local changes
+git pull origin main     # Pull latest code
+# Then restart the bot using the Start command above
 ```
 
 ---
