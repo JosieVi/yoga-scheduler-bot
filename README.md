@@ -135,6 +135,10 @@ tail -f bot_log.txt
 # Update from GitHub
 git reset --hard HEAD    # Discard local changes
 git pull origin main     # Pull latest code
+
+# Stop the bot process:
+pkill -f main.py
+
 # Then restart the bot using the Start command above
 ```
 

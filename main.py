@@ -28,15 +28,27 @@ def load_users_config():
         return {}
 
 USERS_CONFIG = load_users_config()
-MIN_PARTICIPANTS = 2
-DEFAULT_SLOTS_UTC = ["16:00", "16:30", "17:00", "17:30"]
+MIN_PARTICIPANTS = 1
+DEFAULT_SLOTS_UTC = ["16:00", "16:30", "17:00", "17:30", "18:00"]
 YOGA_JOKES = [
-    "Get your mats ready! Savasana won't do itself 🧘‍♀️",
     "The hardest part of yoga is unrolling the mat 😉",
     "Your back will say thank you! 🙏",
     "Don't be like a log, be like bamboo! 🌱",
-    "Inhale - exhale. The main thing is not to fall asleep! 😴",
-    "Yesterday I tried a new yoga pose. It's called 'Sleeping dog face down in the sofa'. Turned out perfectly!"
+    "I've got 99 problems, but I'm going to yoga to forget them all. ✨",
+    "Yoga is the perfect opportunity to be curious about who you are. Or just to wonder what's for dinner. 🍕",
+    "I do yoga so I can reach the wine on the bottom shelf. 🍷",
+    "If you think a minute goes by fast, you've never held a Plank. ⏱️",
+    "Focus on the breath... and try not to think about your emails. 📧",
+    "A little movement a day keeps the grumpiness away! 😊",
+    "I'm doing this so I can carry all the grocery bags in one trip. 🛍️",
+    "Loading new levels of strength... Please do not interrupt the process. ⏳💪",
+    "Each second here is an investment in a version of you that doesn't get tired of being awesome. ✨",
+    "Your future self just sent a 'Thank You' note. It's waiting for you at the end of the session. 📬",
+    "We don't stop when we're tired; we stop when we're finished and legendary. 🏆",
+    "Precision, control, and a tiny bit of 'I've got this' — that's the secret sauce. 🧪",
+    "One more breath, one more inch of progress. It all adds up to something big. 📈",
+    "Turning 'I think I can' into 'I know I did' with every single move. ✅",
+    "Energy doesn't lie. You're putting in the work, and it's starting to show. ⚡"
 ]
 yoga_sessions = {}
 
@@ -67,7 +79,7 @@ def get_week_keyboard():
         builder.button(text=label, callback_data=f"day_{date_val}")
     
     # Arrange buttons in rows of 4
-    builder.adjust(4)
+    builder.adjust(3)
     
     # Add a cancel button at the bottom row
     builder.row(types.InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_calendar"))
@@ -197,13 +209,13 @@ async def process_time_button(callback: types.CallbackQuery, state: FSMContext):
     for user_login, user_offset in USERS_CONFIG.items():
         # Calculate time for each: UTC + offset
         user_dt = dt_utc + timedelta(hours=float(user_offset))
-        results.append(f"📍 **{user_login}**: `{user_dt.strftime('%H:%M (%d.%m)')}`")
+        results.append(f"📍 **{user_login}**: `{user_dt.strftime('%H:%M')}`")
     
     times_list = "\n".join(results)
 
     builder = InlineKeyboardBuilder()
     builder.button(text="🙋‍♂️ I'm in", callback_data="approve")
-    builder.button(text="🏃‍♂️ Can't make it", callback_data="reject")
+    builder.button(text="🏃‍♂️ Not going", callback_data="reject")
     builder.adjust(2)
 
     builder.row(types.InlineKeyboardButton(
@@ -290,7 +302,9 @@ async def update_session_message(callback: types.CallbackQuery):
     # Clear the main text from old statuses
     raw_text = callback.message.text
     # Find the start of the participants block to keep only the session time
-    if "✅ Who is going:" in raw_text:
+    if "Shall we confirm?" in raw_text:
+        base_text = raw_text.split("Shall we confirm?")[0].strip()
+    elif "✅ Who is going:" in raw_text:
         base_text = raw_text.split("✅ Who is going:")[0].strip()
     else:
         base_text = raw_text.strip()
@@ -318,6 +332,127 @@ async def update_session_message(callback: types.CallbackQuery):
         reply_markup=callback.message.reply_markup,
         parse_mode="Markdown"
     )
+
+@dp.message(Command("plank"))
+async def cmd_plank(message: Message):
+    """
+    Starts the plank result selection.
+    """
+    if not message.from_user or not message.from_user.username:
+        await message.answer("❌ Set a Username in Telegram!")
+        return
+
+    builder = InlineKeyboardBuilder()
+    # Options for plank duration
+    options = ["40 sec", "45 sec", "50 sec", "55 sec", "60 sec", "65 sec"]
+    
+    for opt in options:
+        builder.button(text=opt, callback_data=f"plank_{opt}")
+    
+    builder.adjust(3)
+
+    builder.row(types.InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_plank"))
+    
+    await message.answer(
+        f"💪 **Plank Challenge**\n{message.from_user.first_name}, select your result for today:",
+        reply_markup=builder.as_markup(),
+        parse_mode="Markdown"
+    )
+
+@dp.callback_query(F.data == "cancel_plank")
+async def process_cancel_plank(callback: types.CallbackQuery):
+    """Deletes the plank selection message."""
+    try:
+        await callback.message.delete()
+    except Exception:
+        await callback.answer("Window closed")
+    await callback.answer()
+    
+@dp.callback_query(F.data.startswith("plank_"))
+async def process_plank_result(callback: types.CallbackQuery):
+    """
+    Processes the selected plank duration and displays the final result.
+    """
+    # Extract the result from callback data (e.g., "1 min")
+    result = callback.data.split("_")[1]
+    user_name = callback.from_user.first_name
+    date_today = datetime.now().strftime('%d.%m.%Y')
+
+    # Jokes or encouragement for the plank
+    plank_notes = [
+        "Core of steel! 🔥",
+        "Stronger with every second. 💪",
+        "Mind over matter. ✨",
+        "Your future self says thanks. 🙌",
+        "Relentless and unstoppable. 🚀",
+        "Precision in every breath. 🌬️",
+        "Building your foundation. 🏗️",
+        "Energy in motion. ⚡",
+        "Pushing your limits today. 📈",
+        "Absolute focus, total control. 🎯",
+        "Strength starts from within. 🔥",
+        "Mastery of your body. 🧘",
+        "Consistency is the key. 🔑",
+        "Small steps, big results. 🏆",
+        "Find your inner power. 💎"
+        "Unlocking your true potential. 🔓",
+        "Define your own limits. 📍",
+        "Strength in every fiber. 🦾",
+        "Focus fuels the fire. 🕯️",
+        "Commitment creates the result. 🤝",
+        "Solid as a rock. 🪨",
+        "Victory over the clock. ⏱️",
+        "Progress happens right now. ⏳",
+        "Embrace the inner heat. 🌋",
+        "Pure power, zero excuses. 🚫",
+        "Your resolve is unbreakable. 🛡️",
+        "Fueling your daily growth. 🌱",
+        "Commanding your own body. 👑",
+        "One breath at time. 🌬️",
+        "Turning effort into excellence. ✨"
+    ]
+    note = random.choice(plank_notes)
+
+    final_text = (
+        f"🏆 **Plank Completed!**\n\n"
+        f"👤 **User:** {user_name}\n"
+        f"⏱ **Result:** {result}\n"
+        f"📅 **Date:** {date_today}\n\n"
+        f"_{note}_"
+    )
+
+    builder = InlineKeyboardBuilder()
+    # Button to go back and change the result
+    builder.button(text="⬅️ Back", callback_data="back_to_plank")
+    # Button to delete the result message
+    builder.button(text="❌ Delete", callback_data="cancel_plank")
+    builder.adjust(2)
+
+    # Edit the original message to show the final result
+    await callback.message.edit_text(
+        text=final_text,
+        reply_markup=builder.as_markup(), # Keyboard stays here
+        parse_mode="Markdown"
+    )
+    
+    await callback.answer("Result saved!")
+
+@dp.callback_query(F.data == "back_to_plank")
+async def process_back_to_plank(callback: types.CallbackQuery):
+    """Returns the user to the duration selection menu."""
+    builder = InlineKeyboardBuilder()
+    options = ["40 sec", "45 sec", "50 sec", "55 sec", "60 sec", "65 sec"]
+    for opt in options:
+        builder.button(text=opt, callback_data=f"plank_{opt}")
+    builder.adjust(3)
+    builder.row(types.InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_plank"))
+
+    await callback.message.edit_text(
+        f"💪 **Plank Challenge**\n{callback.from_user.first_name}, select your result for today:",
+        reply_markup=builder.as_markup(),
+        parse_mode="Markdown"
+    )
+    await callback.answer()
         
 @dp.message(Command("shutdown"))
 async def cmd_shutdown(message: Message):
