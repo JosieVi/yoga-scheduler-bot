@@ -1,5 +1,6 @@
 .env
 __pycache__/
 venv/
-users.json
+users_plank.json
+users_yoga.json
 tempCodeRunnerFile.py

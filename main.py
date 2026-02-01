@@ -21,14 +21,15 @@ API_TOKEN = os.getenv("BOT_TOKEN")
 if not API_TOKEN:
     raise ValueError("BOT_TOKEN not found!")
 
-def load_users_config():
-    try:
-        with open("users.json", "r", encoding="utf-8") as f:
+def load_users(filename):
+    if os.path.exists(filename):
+        with open(filename, 'r', encoding='utf-8') as f:
             return json.load(f)
-    except:
-        return {}
+    return {}
 
-USERS_CONFIG = load_users_config()
+YOGA_USERS = load_users('users_yoga.json')
+PLANK_USERS = load_users('users_plank.json')
+
 MIN_PARTICIPANTS = 1
 DEFAULT_SLOTS_UTC = ["16:00", "16:30", "17:00", "17:30", "18:00"]
 YOGA_JOKES = [
@@ -181,7 +182,7 @@ async def process_day_selection(callback: types.CallbackQuery, state: FSMContext
     # IMPORTANT: save the date so process_time_button can see it
     await state.update_data(chosen_date=selected_date)
     username = callback.from_user.username.lower() if callback.from_user.username else ""
-    user_offset = float(USERS_CONFIG.get(username, 0.0))
+    user_offset = float(YOGA_USERS.get(username, 0.0))
     
     builder = InlineKeyboardBuilder()
     for utc_time in DEFAULT_SLOTS_UTC:
@@ -243,7 +244,7 @@ async def process_time_button(callback: types.CallbackQuery, state: FSMContext):
     
     # Generate list of times for ALL based on saved UTC
     results = []
-    for user_login, user_offset in USERS_CONFIG.items():
+    for user_login, user_offset in YOGA_USERS.items():
         # Calculate time for each: UTC + offset
         user_dt = dt_utc + timedelta(hours=float(user_offset))
         results.append(f"📍 **{user_login}**: `{user_dt.strftime('%H:%M')}`")
@@ -488,7 +489,7 @@ async def process_plank_final(callback: types.CallbackQuery, state: FSMContext):
     user_name = callback.from_user.first_name
 
     # Get user's timezone offset
-    user_offset = float(USERS_CONFIG.get(username, 0.0))
+    user_offset = float(PLANK_USERS.get(username, 0.0))
 
     # Get current UTC time
     now_utc = datetime.now(timezone.utc)
@@ -553,7 +554,7 @@ async def cmd_shutdown(message: Message):
     """
     if not message.from_user or not message.from_user.username: return
     
-    user_keys = list(USERS_CONFIG.keys())
+    user_keys = list(YOGA_USERS.keys())
     admin_username = user_keys[0] if user_keys else ""
 
     if message.from_user.username.lower() == admin_username:
