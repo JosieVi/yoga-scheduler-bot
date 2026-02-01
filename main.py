@@ -4,7 +4,7 @@ import os
 import json
 import random
 from dotenv import load_dotenv
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.filters import Command
@@ -13,6 +13,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.types import Message
+from aiogram.exceptions import TelegramRetryAfter, TelegramBadRequest
 
 # --- CONFIGURATION ---
 load_dotenv()
@@ -50,6 +51,39 @@ YOGA_JOKES = [
     "Turning 'I think I can' into 'I know I did' with every single move. ✅",
     "Energy doesn't lie. You're putting in the work, and it's starting to show. ⚡"
 ]
+PLANK_MOTIVATION = [
+    "Great job! Keep going! 💪",
+    "You are getting stronger! 🔥",
+    "Every second counts. 💪",
+    "Stay strong, stay focused. ✨",
+    "You will feel great later! 🙌",
+    "Nothing can stop you now! 🚀",
+    "Breathe deep and stay calm. 🌬️",
+    "You are building a strong body. 🏗️",
+    "Feel the energy inside! ⚡",
+    "Doing more than yesterday! 📈",
+    "Full focus, full control. 🎯",
+    "Real strength comes from inside. 🔥",
+    "You control your body. 🧘",
+    "Regular practice is the secret. 🔑",
+    "Small steps lead to success. 🏆",
+    "You are very powerful! 💎",
+    "Show what you can do! 🔓",
+    "You decide your limits. 📍",
+    "Your muscles are working hard. 🦾",
+    "Concentrate and finish strong. 🕯️",
+    "Hard work brings results. 🤝",
+    "Strong like a rock! 🪨",
+    "You won against the clock! ⏱️",
+    "You are improving right now. ⏳",
+    "Don't stop, feel the heat! 🌋",
+    "Strong body, no excuses. 🚫",
+    "You are doing amazing! 🛡️",
+    "Grow a little every day. 🌱",
+    "You are the boss of your body. 👑",
+    "Just one breath at a time. 🌬️",
+    "Your effort is worth it! ✨"
+]
 yoga_sessions = {}
 
 logging.basicConfig(level=logging.INFO)
@@ -58,6 +92,9 @@ dp = Dispatcher(storage=MemoryStorage())
 
 class YogaState(StatesGroup):
     waiting_for_time = State()
+
+class PlankState(StatesGroup):
+    adjusting = State()
 
 # --- Helper Functions ---
 
@@ -334,30 +371,62 @@ async def update_session_message(callback: types.CallbackQuery):
     )
 
 @dp.message(Command("plank"))
-async def cmd_plank(message: Message):
+async def cmd_plank(message: Message, state: FSMContext):
     """
-    Starts the plank result selection.
+    Initiates the plank challenge by prompting the user to adjust their plank time.
+
+    Args:
+        message (Message): The message containing the command.
+        state (FSMContext): The state context for the FSM.
     """
     if not message.from_user or not message.from_user.username:
         await message.answer("❌ Set a Username in Telegram!")
         return
 
-    builder = InlineKeyboardBuilder()
-    # Options for plank duration
-    options = ["40 sec", "45 sec", "50 sec", "55 sec", "60 sec", "65 sec"]
-    
-    for opt in options:
-        builder.button(text=opt, callback_data=f"plank_{opt}")
-    
-    builder.adjust(3)
-
-    builder.row(types.InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_plank"))
+    initial_seconds = 60
+    await state.set_state(PlankState.adjusting)
+    await state.update_data(current_seconds=initial_seconds)
     
     await message.answer(
-        f"💪 **Plank Challenge**\n{message.from_user.first_name}, select your result for today:",
-        reply_markup=builder.as_markup(),
+        f"💪 **Plank Challenge**\n{message.from_user.first_name}, adjust your result:",
+        reply_markup=get_plank_slider_keyboard(initial_seconds),
         parse_mode="Markdown"
     )
+
+def get_plank_slider_keyboard(seconds: int):
+    """
+    Generates an inline keyboard for adjusting plank time.
+
+    Args:
+        seconds (int): The current number of seconds for the plank.
+
+    Returns:
+        InlineKeyboardMarkup: The generated keyboard markup.
+    """
+    builder = InlineKeyboardBuilder()
+    
+    m, s = divmod(seconds, 60)
+    time_str = f"{m}:{s:02d}" if m > 0 else f"{s} sec"
+    
+    # Row 1: Fine-tuning (5 sec)
+    builder.row(
+        types.InlineKeyboardButton(text="➖ 5s", callback_data="plank_adj_-5"),
+        types.InlineKeyboardButton(text=f"⏱ {time_str}", callback_data="ignore"),
+        types.InlineKeyboardButton(text="➕ 5s", callback_data="plank_adj_5")
+    )
+    
+    # Row 2: Quick adjustment (10 sec)
+    builder.row(
+        types.InlineKeyboardButton(text="➖ 10s", callback_data="plank_adj_-10"),
+        types.InlineKeyboardButton(text="➕ 10s", callback_data="plank_adj_10")
+    )
+    
+    # Row 3: Controls
+    builder.row(
+        types.InlineKeyboardButton(text="✅ Confirm", callback_data=f"plank_final_{time_str}"),
+        types.InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_plank")
+    )
+    return builder.as_markup()
 
 @dp.callback_query(F.data == "cancel_plank")
 async def process_cancel_plank(callback: types.CallbackQuery):
@@ -367,51 +436,70 @@ async def process_cancel_plank(callback: types.CallbackQuery):
     except Exception:
         await callback.answer("Window closed")
     await callback.answer()
-    
-@dp.callback_query(F.data.startswith("plank_"))
-async def process_plank_result(callback: types.CallbackQuery):
-    """
-    Processes the selected plank duration and displays the final result.
-    """
-    # Extract the result from callback data (e.g., "1 min")
-    result = callback.data.split("_")[1]
-    user_name = callback.from_user.first_name
-    date_today = datetime.now().strftime('%d.%m.%Y')
 
-    # Jokes or encouragement for the plank
-    plank_notes = [
-        "Core of steel! 🔥",
-        "Stronger with every second. 💪",
-        "Mind over matter. ✨",
-        "Your future self says thanks. 🙌",
-        "Relentless and unstoppable. 🚀",
-        "Precision in every breath. 🌬️",
-        "Building your foundation. 🏗️",
-        "Energy in motion. ⚡",
-        "Pushing your limits today. 📈",
-        "Absolute focus, total control. 🎯",
-        "Strength starts from within. 🔥",
-        "Mastery of your body. 🧘",
-        "Consistency is the key. 🔑",
-        "Small steps, big results. 🏆",
-        "Find your inner power. 💎"
-        "Unlocking your true potential. 🔓",
-        "Define your own limits. 📍",
-        "Strength in every fiber. 🦾",
-        "Focus fuels the fire. 🕯️",
-        "Commitment creates the result. 🤝",
-        "Solid as a rock. 🪨",
-        "Victory over the clock. ⏱️",
-        "Progress happens right now. ⏳",
-        "Embrace the inner heat. 🌋",
-        "Pure power, zero excuses. 🚫",
-        "Your resolve is unbreakable. 🛡️",
-        "Fueling your daily growth. 🌱",
-        "Commanding your own body. 👑",
-        "One breath at time. 🌬️",
-        "Turning effort into excellence. ✨"
-    ]
-    note = random.choice(plank_notes)
+@dp.callback_query(F.data.startswith("plank_adj_"))
+async def process_plank_adjustment(callback: types.CallbackQuery, state: FSMContext):
+    """
+    Adjusts the plank time based on user input and updates the inline keyboard.
+
+    Args:
+        callback (types.CallbackQuery): The callback query containing the adjustment data.
+        state (FSMContext): The state context for the FSM.
+    """
+    # Extract the adjustment value from callback_data
+    adjustment = int(callback.data.split("_")[2])
+    
+    data = await state.get_data()
+    current_seconds = data.get("current_seconds", 60)
+    
+    # Calculate new time (minimum 5 seconds)
+    new_seconds = max(5, current_seconds + adjustment)
+    
+    # Если время не изменилось (например, уже 5с и нажали -5), просто гасим кнопку
+    if new_seconds == current_seconds:
+        await callback.answer()
+        return
+
+    await state.update_data(current_seconds=new_seconds)
+    
+    try:
+        await callback.message.edit_reply_markup(
+            reply_markup=get_plank_slider_keyboard(new_seconds)
+        )
+        await callback.answer()
+    except TelegramRetryAfter as e:
+        # If the user clicks too fast
+        await callback.answer(f"Too fast! Wait {e.retry_after}s", show_alert=True)
+    except TelegramBadRequest:
+        # If the message has not changed
+        await callback.answer()
+    
+@dp.callback_query(F.data.startswith("plank_final_"))
+async def process_plank_final(callback: types.CallbackQuery, state: FSMContext):
+    """
+    Finalizes the plank challenge, calculates the user's local date, and displays the result.
+
+    Args:
+        callback (types.CallbackQuery): The callback query containing the final result.
+        state (FSMContext): The state context for the FSM.
+    """
+    result = callback.data.split("_")[2]
+    username = callback.from_user.username.lower() if callback.from_user.username else ""
+    user_name = callback.from_user.first_name
+
+    # Get user's timezone offset
+    user_offset = float(USERS_CONFIG.get(username, 0.0))
+
+    # Get current UTC time
+    now_utc = datetime.now(timezone.utc)
+
+    # Calculate user's local time
+    user_time = now_utc + timedelta(hours=user_offset)
+    
+    # Format date as DD.MM.YYYY
+    date_today = user_time.strftime('%d.%m.%Y')
+    
+    note = random.choice(PLANK_MOTIVATION)
 
     final_text = (
         f"🏆 **Plank Completed!**\n\n"
@@ -422,34 +510,35 @@ async def process_plank_result(callback: types.CallbackQuery):
     )
 
     builder = InlineKeyboardBuilder()
-    # Button to go back and change the result
     builder.button(text="⬅️ Back", callback_data="back_to_plank")
-    # Button to delete the result message
     builder.button(text="❌ Delete", callback_data="cancel_plank")
     builder.adjust(2)
 
-    # Edit the original message to show the final result
-    await callback.message.edit_text(
-        text=final_text,
-        reply_markup=builder.as_markup(), # Keyboard stays here
-        parse_mode="Markdown"
-    )
-    
+    await state.clear()
+    await callback.message.edit_text(final_text, reply_markup=builder.as_markup(), parse_mode="Markdown")
     await callback.answer("Result saved!")
 
-@dp.callback_query(F.data == "back_to_plank")
-async def process_back_to_plank(callback: types.CallbackQuery):
-    """Returns the user to the duration selection menu."""
-    builder = InlineKeyboardBuilder()
-    options = ["40 sec", "45 sec", "50 sec", "55 sec", "60 sec", "65 sec"]
-    for opt in options:
-        builder.button(text=opt, callback_data=f"plank_{opt}")
-    builder.adjust(3)
-    builder.row(types.InlineKeyboardButton(text="❌ Cancel", callback_data="cancel_plank"))
+@dp.callback_query(F.data == "ignore")
+async def process_ignore(callback: types.CallbackQuery):
+    """Empty handler for the central time button to prevent errors."""
+    await callback.answer()
 
+@dp.callback_query(F.data == "back_to_plank")
+async def process_back_to_plank(callback: types.CallbackQuery, state: FSMContext):
+    """
+    Returns the user to the interactive slider.
+    Resets the state to 'adjusting' with default 60 seconds.
+    """
+    initial_seconds = 60
+    
+    # Throw user back to adjusting state
+    await state.set_state(PlankState.adjusting)
+    await state.update_data(current_seconds=initial_seconds)
+
+    # Update message
     await callback.message.edit_text(
-        f"💪 **Plank Challenge**\n{callback.from_user.first_name}, select your result for today:",
-        reply_markup=builder.as_markup(),
+        f"💪 **Plank Challenge**\n{callback.from_user.first_name}, adjust your result:",
+        reply_markup=get_plank_slider_keyboard(initial_seconds),
         parse_mode="Markdown"
     )
     await callback.answer()
