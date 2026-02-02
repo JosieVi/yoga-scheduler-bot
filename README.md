@@ -1,10 +1,10 @@
-# Yoga Scheduler Bot 🧘‍♂️🕒
+# Yoga Scheduler Bot 🧘‍♂️�
 
-Telegram bot for automating the scheduling of group yoga sessions across different time zones.
+Telegram bot for automating the scheduling of group yoga sessions and plank challenges across different time zones.
 
 ## 🎯 Project Goal
 
-Simplify the coordination of training times for participants located in different parts of the world. The bot handles the routine of converting time from UTC to each user's local time zone and helps visually assess if a group is forming (minimum participants).
+Simplify the coordination of training times for participants located in different parts of the world. The bot handles the routine of converting time from UTC to each user's local time zone, helps visually assess if a group is forming (minimum participants), and includes an interactive plank challenge tracker.
 
 ---
 
@@ -14,10 +14,11 @@ Simplify the coordination of training times for participants located in differen
 - **Dynamic Calendar:** Date selection is limited to the current week (4x2 grid), minimizing unnecessary clicks.
 - **Automatic Calculation:** When selecting a time, the bot instantly displays a list: how this time will look in Helsinki, London, New York, etc.
 - **Interactive Group Gathering:**
-- 'I'm in' and 'Can't make it' buttons with protection against repeated clicks.
-- Automatic status 'Session confirmed' when the minimum number of participants is reached.
+  - 'I'm in' and 'Can't make it' buttons with protection against repeated clicks.
+  - Automatic status 'Session confirmed' when the minimum number of participants is reached.
 - **Yoga Humor:** Reward system — the bot shows a random yoga joke as soon as the group is gathered.
-- **Administration:** The `/shutdown` command is available only to the owner (the first one in the `users.json` list).
+- **Plank Challenge:** Interactive plank timer with adjustable duration (in 5s and 10s increments) and motivational messages.
+- **Administration:** The `/shutdown` command is available only to the owner (the first one in the `users_yoga.json` list).
 
 ---
 
@@ -26,7 +27,8 @@ Simplify the coordination of training times for participants located in differen
 - **Language:** Python 3.10+
 - **Library:** `aiogram 3.x` (asynchronous work with Telegram API).
 - **Data Storage:** `JSON` (for user configuration and UTC offsets).
-- **State:** `FSM (Finite State Machine)` for remembering selected dates.
+- **State:** `FSM (Finite State Machine)` for remembering selected dates and plank adjustments.
+- **Configuration:** `config.py` for centralized constants and text resources.
 
 ---
 
@@ -35,10 +37,11 @@ Simplify the coordination of training times for participants located in differen
 ```text
 yoga-bot/
 ├── main.py           # Main bot code and command handlers
-├── users.json        # User database (login and UTC offset)
+├── config.py         # Configuration constants and text resources
+├── users_yoga.json   # Yoga user database (login and UTC offset)
+├── users_plank.json  # Plank user database (login and UTC offset)
 ├── requirements.txt  # List of dependencies
 └── README.md         # Project description
-
 ```
 
 ---
@@ -76,11 +79,14 @@ pip install -r requirements.txt
 4. **Prepare the bot**
 
 - Create a bot via @BotFather in Telegram and get the **API TOKEN**.
-- Insert the token into your `main.py` code (in the `BOT_TOKEN` variable).
+- Create a `.env` file in the root folder with your token:
+  ```
+  BOT_TOKEN=your_token_here
+  ```
 
-5. **Configure users** (`users.json`)
+5. **Configure users** (`users_yoga.json` and `users_plank.json`)
 
-Create a `users.json` file in the root folder. The first user in the list will become the **Administrator**.
+Create user configuration files in the root folder. The first user in the list will become the **Administrator**.
 
 ```json
 {
@@ -146,19 +152,29 @@ pkill -f main.py
 
 ## 📝 Usage
 
-1. Send the /yoga command to the bot.
-2. Select a day of the week (the buttons automatically adapt to the current date).).
+### Yoga Sessions
+
+1. Send the `/yoga` command to the bot.
+2. Select a day of the week (the buttons automatically adapt to the current date).
 3. Choose a convenient time slot (the time on the buttons will be shown in your local time zone).
 4. The bot will post a final message featuring a calculated time list for all configured cities.
-5. Click "Going" and wait until the required minimum number of participants is reached for the bot to share a joke!
+5. Click "I'm in" or "Can't make it" and wait until the required minimum number of participants is reached for the bot to share a joke!
+
+### Plank Challenge
+
+1. Send the `/plank` command to the bot.
+2. Adjust the plank duration using the ➖ and ➕ buttons (adjusts by 5s or 10s).
+3. Click ✅ Confirm to finalize your result.
+4. The bot will display your result with a motivational message and local date.
 
 ---
 
 ## ⚠️ Notes
 
-- **Security:** The bot responds to the `/shutdown` command only from the first user in `users.json`.
-- **Lowercase:** All logins in `users.json` must be in lowercase for correct search.
-- **Time Offset:** The current version uses static numbers. When switching to daylight saving time/winter time, values in `users.json` need to be updated manually.
+- **Security:** The bot responds to the `/shutdown` command only from the first user in `users_yoga.json`.
+- **Lowercase:** All logins in user configuration files must be in lowercase for correct search.
+- **Time Offset:** The current version uses static numbers. When switching to daylight saving time/winter time, values in user configuration files need to be updated manually.
+- **Configuration:** All constants and text resources can be easily modified in `config.py` without changing `main.py`.
 
 ---
 
