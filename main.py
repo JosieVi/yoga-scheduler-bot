@@ -231,7 +231,9 @@ async def process_time_button(callback: types.CallbackQuery, state: FSMContext):
     results = []
     for user_login, user_offset in YOGA_USERS.items():
         user_dt = convert_utc_to_local(dt_utc, float(user_offset))
-        results.append(f"📍 **{user_login}**: `{user_dt.strftime('%H:%M')}`")
+        # Escape markdown special characters (underscore, asterisk, etc.)
+        escaped_login = user_login.replace("_", "\\_").replace("*", "\\*")
+        results.append(f"📍 {escaped_login}: {user_dt.strftime('%H:%M')}")
 
     times_list = "\n".join(results)
 
