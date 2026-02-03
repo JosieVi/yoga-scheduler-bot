@@ -1,4 +1,4 @@
-# Yoga Scheduler Bot 🧘‍♂️�
+# Yoga Scheduler Bot 🧘‍♂️
 
 Telegram bot for automating the scheduling of group yoga sessions and plank challenges across different time zones.
 
@@ -16,7 +16,7 @@ Simplify the coordination of training times for participants located in differen
 - **Interactive Group Gathering:**
   - 'I'm in' and 'Can't make it' buttons with protection against repeated clicks.
   - Automatic status 'Session confirmed' when the minimum number of participants is reached.
-- **Yoga Humor:** Reward system — the bot shows a random yoga joke as soon as the group is gathered.
+- **Yoga Humor:** Reward system - the bot shows a random yoga joke as soon as the group is gathered.
 - **Plank Challenge:** Interactive plank timer with adjustable duration (in 5s and 10s increments) and motivational messages.
 - **Access Control:** The `AccessMiddleware` ensures only registered users (from `users_yoga.json` or `users_plank.json`) can interact with the bot.
 - **Administration:** The `/shutdown` command is available only to the owner (the first one in the `users_yoga.json` list).
