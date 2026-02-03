@@ -6,13 +6,13 @@ import random
 from dotenv import load_dotenv
 from datetime import datetime, timedelta, timezone
 
-from aiogram import Bot, Dispatcher, types, F
+from aiogram import Bot, Dispatcher, types, F, BaseMiddleware
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.types import Message
+from aiogram.types import Message, TelegramObject
 from aiogram.exceptions import TelegramRetryAfter, TelegramBadRequest
 
 # --- CONFIGURATION ---
@@ -55,6 +55,29 @@ logger = logging.getLogger(__name__)
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
+
+
+class AccessMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event: TelegramObject, data):
+        # Проверяем только сообщения и колбэки
+        user = data.get("event_from_user")
+        if not user or not user.username:
+            return # Игнорируем пользователей без юзернейма
+
+        username = user.username.lower()
+
+        # Если пользователя нет ни в одном из списков доступа — блокируем
+        if username not in YOGA_USERS and username not in PLANK_USERS:
+            # Можно отправить сообщение, а можно просто промолчать (return)
+            if hasattr(event, "answer"): # Если это сообщение
+                await event.answer("🚫 Access denied. You are not on the guest list.")
+            return
+
+        # Если пользователь есть в списках, пропускаем его дальше к командам
+        return await handler(event, data)
+
+# Регистрация Middleware в диспетчере
+dp.update.outer_middleware(AccessMiddleware())
 
 
 class YogaState(StatesGroup):

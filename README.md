@@ -18,6 +18,7 @@ Simplify the coordination of training times for participants located in differen
   - Automatic status 'Session confirmed' when the minimum number of participants is reached.
 - **Yoga Humor:** Reward system — the bot shows a random yoga joke as soon as the group is gathered.
 - **Plank Challenge:** Interactive plank timer with adjustable duration (in 5s and 10s increments) and motivational messages.
+- **Access Control:** The `AccessMiddleware` ensures only registered users (from `users_yoga.json` or `users_plank.json`) can interact with the bot.
 - **Administration:** The `/shutdown` command is available only to the owner (the first one in the `users_yoga.json` list).
 
 ---
@@ -28,6 +29,7 @@ Simplify the coordination of training times for participants located in differen
 - **Library:** `aiogram 3.x` (asynchronous work with Telegram API).
 - **Data Storage:** `JSON` (for user configuration and UTC offsets).
 - **State:** `FSM (Finite State Machine)` for remembering selected dates and plank adjustments.
+- **Middleware:** `AccessMiddleware` for access control and user authentication.
 - **Configuration:** `config.py` for centralized constants and text resources.
 
 ---
