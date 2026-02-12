@@ -48,14 +48,9 @@ jobs:
         username: ${{ secrets.USERNAME }}
         key: ${{ secrets.SSH_KEY }}
         script: |
-
-          cd yoga-scheduler-bot
-          
-          git pull origin main
-          
+          cd yoga-scheduler-bot          
+          git fetch --all
+          git reset --hard origin/main        
           source venv/bin/activate
-          pip install -r requirements.txt
-          
-          # (Если запросит пароль sudo, бот может зависнуть. 
-          # Обычно на GCP sudo работает без пароля, это ок)
-          sudo systemctl restart yoga_scheduler_bot
+          pip install -r requirements.txt          
+          sudo systemctl restart yoga_scheduler_bot.service
