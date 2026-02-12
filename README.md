@@ -204,4 +204,9 @@ pkill -f main.py
 
 ---
 
+## DEMO
+![demo-scheduler-bot](https://github.com/user-attachments/assets/6870777e-435a-494d-9a94-2d8a87dbce2e)
+
+---
+
 **Have a productive workout!**
