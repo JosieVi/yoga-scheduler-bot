@@ -23,11 +23,27 @@ Simplify the coordination of training times for participants located in differen
 
 ---
 
+## 🧩 Middlewares
+
+The bot uses a custom middleware system to handle cross-cutting concerns:
+
+### 🛡 AccessMiddleware
+
+This is the primary security layer of the bot. It intercepts every incoming update (Message or CallbackQuery) and performs the following checks:
+
+1.  **Username Presence:** Ensures the user has a Telegram username set. If not, the request is rejected with a prompt to set one.
+2.  **Whitelist Validation:** Checks if the user's username (case-insensitive) exists in either `users_yoga.json` or `users_plank.json`.
+3.  **Automated Responses:** If access is denied, the middleware automatically sends a message (for commands) or a pop-up alert (for button clicks) explaining the reason.
+
+This approach keeps the handler logic clean by centralizing authorization in one place.
+
+---
+
 ## 🛠 Tech Stack (Resources)
 
 - **Language:** Python 3.10+
 - **Library:** `aiogram 3.x` (asynchronous work with Telegram API).
-- **Data Storage:** `JSON` (for user configuration and UTC offsets).
+- **Data Storage:** `aiosqlite` (SQLite) for plank history and `JSON` (for user configuration and UTC offsets).
 - **State:** `FSM (Finite State Machine)` for remembering selected dates and plank adjustments.
 - **Middleware:** `AccessMiddleware` for access control and user authentication.
 - **Configuration:** `config.py` for centralized constants and text resources.
@@ -37,13 +53,21 @@ Simplify the coordination of training times for participants located in differen
 ## 📂 Project Structure
 
 ```text
-yoga-bot/
-├── main.py           # Main bot code and command handlers
-├── config.py         # Configuration constants and text resources
-├── users_yoga.json   # Yoga user database (login and UTC offset)
-├── users_plank.json  # Plank user database (login and UTC offset)
-├── requirements.txt  # List of dependencies
-└── README.md         # Project description
+schedule-bot/
+├── main.py             # Entry point, initializes bot and routers
+├── config.py           # Configuration constants and text resources
+├── db/
+│   └── database.py     # Database initialization and SQLite management
+├── handlers/           # Command and callback handlers (yoga, plank)
+├── views/
+│   └── views.py        # UI components (inline keyboards and graphs)
+├── middlewares.py      # Access control and session middlewares
+├── states.py           # FSM states definitions
+├── utils.py            # Helper functions (time formatting, etc.)
+├── users_yoga.json     # Yoga user database (login and UTC offset)
+├── users_plank.json    # Plank user database (login and UTC offset)
+├── requirements.txt    # List of dependencies
+└── README.md           # Project description
 ```
 
 ---

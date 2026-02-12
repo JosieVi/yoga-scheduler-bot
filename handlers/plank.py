@@ -23,7 +23,7 @@ from utils import (
     convert_utc_to_local,
     to_seconds,
 )
-from views.views import (
+from views.plank import (
     get_plank_slider_keyboard,
     get_plank_result_keyboard,
     get_plank_stats_keyboard,
@@ -56,6 +56,24 @@ from config import (
 logger = logging.getLogger(__name__)
 
 plank_router = Router()
+
+
+def _build_stats_text(data: dict) -> str:
+    """Build full plank statistics text for 7 and 30 days."""
+    return (
+        PLANK_TEXT_STATS_HEADER
+        + PLANK_TEXT_STATS_WEEK_TITLE
+        + f" • Total time: <code>{format_time(data[7]['total'])}</code>\n"
+        + f" • Attempts: <code>{data[7]['count']}</code>\n"
+        + f" • Average: <code>{format_time(data[7]['avg'])}</code>\n"
+        + f" • Best: <code>{format_time(data[7]['max'])}</code> 🏆\n\n"
+        + PLANK_TEXT_STATS_MONTH_TITLE
+        + f" • Total time: <code>{format_time(data[30]['total'])}</code>\n"
+        + f" • Attempts: <code>{data[30]['count']}</code>\n"
+        + f" • Average: <code>{format_time(data[30]['avg'])}</code>\n"
+        + f" • Best: <code>{format_time(data[30]['max'])}</code> 🦁\n\n"
+        + PLANK_TEXT_STATS_TAGLINE
+    )
 
 @plank_router.message(Command("plank"))
 async def cmd_plank(message: Message, state: FSMContext):
@@ -204,21 +222,7 @@ async def show_summary(message: types.Message):
     
     data = await get_user_stats(user_id)
 
-    # Form the message. Use <code> for numbers to make them stand out.
-    text = (
-        PLANK_TEXT_STATS_HEADER
-        + PLANK_TEXT_STATS_WEEK_TITLE
-        + f" • Total time: <code>{format_time(data[7]['total'])}</code>\n"
-        + f" • Attempts: <code>{data[7]['count']}</code>\n"
-        + f" • Average: <code>{format_time(data[7]['avg'])}</code>\n"
-        + f" • Best: <code>{format_time(data[7]['max'])}</code> 🏆\n\n"
-        + PLANK_TEXT_STATS_MONTH_TITLE
-        + f" • Total time: <code>{format_time(data[30]['total'])}</code>\n"
-        + f" • Attempts: <code>{data[30]['count']}</code>\n"
-        + f" • Average: <code>{format_time(data[30]['avg'])}</code>\n"
-        + f" • Best: <code>{format_time(data[30]['max'])}</code> 🦁\n\n"
-        + PLANK_TEXT_STATS_TAGLINE
-    )
+    text = _build_stats_text(data)
 
     await message.answer(
         text, parse_mode="HTML", reply_markup=get_plank_stats_keyboard()
@@ -267,15 +271,7 @@ async def process_hide_details(callback: types.CallbackQuery):
     user_id = callback.from_user.id
     data = await get_user_stats(user_id)
 
-    text = (
-        PLANK_TEXT_STATS_HEADER
-        + PLANK_TEXT_STATS_WEEK_TITLE
-        + f" • Attempts: <code>{data[7]['count']}</code>\n"
-        + f" • Best: <code>{format_time(data[7]['max'])}</code>\n\n"
-        + PLANK_TEXT_STATS_MONTH_TITLE
-        + f" • Total: <code>{format_time(data[30]['total'])}</code>\n"
-        + f" • Average: <code>{format_time(data[30]['avg'])}</code>\n"
-    )
+    text = _build_stats_text(data)
 
     await callback.message.edit_text(
         text, parse_mode="HTML", reply_markup=get_plank_stats_keyboard()
@@ -286,13 +282,19 @@ async def process_hide_details(callback: types.CallbackQuery):
 async def send_graph(message: types.Message):
     user_id = message.from_user.id
     
-    data = await get_plank_history(user_id)
+    raw_data = await get_plank_history(user_id)
     
-    if not data:
+    if not raw_data:
         await message.answer(PLANK_TEXT_GRAPH_NO_DATA)
         return
 
-    photo_file = generate_progress_graph(data)
+    # Prepare (datetime, seconds) points for the graph
+    points = [
+        (datetime.strptime(date_str, "%Y-%m-%d"), duration)
+        for date_str, duration in raw_data
+    ]
+
+    photo_file = generate_progress_graph(points)
     
     if photo_file:
         # BufferedInputFile is needed to send bytes as a file
