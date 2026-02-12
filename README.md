@@ -54,20 +54,24 @@ This approach keeps the handler logic clean by centralizing authorization in one
 
 ```text
 schedule-bot/
-├── main.py             # Entry point, initializes bot and routers
-├── config.py           # Configuration constants and text resources
+├── main.py               # Entry point, initializes bot and routers
+├── config.py             # Configuration constants and all texts/buttons
 ├── db/
-│   └── database.py     # Database initialization and SQLite management
-├── handlers/           # Command and callback handlers (yoga, plank)
+│   └── database.py       # SQLite access layer for plank history
+├── handlers/             # Command and callback handlers
+│   ├── yoga.py           # /yoga flow, attendance logic
+│   └── plank.py          # /plank, /progress, /graph flows
 ├── views/
-│   └── views.py        # UI components (inline keyboards and graphs)
-├── middlewares.py      # Access control and session middlewares
-├── states.py           # FSM states definitions
-├── utils.py            # Helper functions (time formatting, etc.)
-├── users_yoga.json     # Yoga user database (login and UTC offset)
-├── users_plank.json    # Plank user database (login and UTC offset)
-├── requirements.txt    # List of dependencies
-└── README.md           # Project description
+│   ├── yoga.py           # Yoga keyboards (week, time, attendance)
+│   └── plank.py          # Plank keyboards and graph generators
+├── middlewares.py        # AccessMiddleware and other middlewares
+├── states.py             # FSM states definitions
+├── utils.py              # Time, validation, markdown helpers
+├── tests/                # Unit tests (utils, db, views, config)
+├── users_yoga.json       # Yoga user database (login → UTC offset)
+├── users_plank.json      # Plank user database (login → UTC offset)
+├── requirements.txt      # Dependencies
+└── README.md             # Project description
 ```
 
 ---
@@ -133,17 +137,29 @@ python main.py
 
 ---
 
-## 🚀 Deployment on Google Cloud (VM Instance)
+### 🧪 Running Tests (for CI/CD)
 
-### 1. Requirements
+Unit tests cover utilities, database layer and graph generation:
+
+```bash
+pytest
+```
+
+Основное:
+
+- `tests/test_utils.py` — формат времени, конвертация, валидация пользователя.
+- `tests/test_database.py` — работа с SQLite (init, insert, delete, stats, details).
+- `tests/test_views.py` — генерация графика прогресса из готовых точек.
+
+---
+
+## 🚀 Deployment Examples
+
+### 1. Google Cloud VM (screen/nohup вариант)
 
 - **Machine:** Google Cloud VM (e2-micro for Free Tier).
 - **Environment:** Python 3.9+, `venv` (recommended).
 - **Firewall:** Port 22 (SSH) open for IAP/Personal IP.
-
-### 2. Management Commands
-
-#### 🔹 Start the Bot
 
 To run the bot 24/7 even after closing the SSH session:
 
@@ -192,6 +208,14 @@ pkill -f main.py
 2. Adjust the plank duration using the ➖ and ➕ buttons (adjusts by 5s or 10s).
 3. Click ✅ Confirm to finalize your result.
 4. The bot will display your result with a motivational message and local date.
+
+### Plank Statistics & Graph
+
+- `/progress` — shows weekly and monthly statistics:
+  - total time, attempts, average and best result for 7 and 30 days;
+  - button **“Details (Log)”** opens a per‑day attempt history for the last 30 days;
+  - button **“Hide”** returns back to the full statistics view.
+- `/graph` — sends a PNG graph of your plank progress over the last 30 days.
 
 ---
 
