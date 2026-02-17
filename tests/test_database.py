@@ -28,7 +28,6 @@ async def test_user_stats_calculation():
     stat_7 = stats.get(7)
     assert stat_7 is not None
 
-    # Строгая арифметика
     assert stat_7["total"] == 90
     assert stat_7["count"] == 2
     assert stat_7["max"] == 60

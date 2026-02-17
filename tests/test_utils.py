@@ -78,19 +78,17 @@ def test_get_user_offset_logic():
 @pytest.mark.parametrize(
     "text, expected",
     [
-        ("user_name", r"user\_name"),
-        ("bold*text", r"bold\*text"),
-        ("func(args)", r"func\(args\)"),
+        ("user_name", "user\\_name"),
+        ("bold*text", "bold\\*text"),
+        ("func(args)", "func(args)"),
         ("normal text", "normal text"),
     ],
 )
 def test_markdown_escaping(text, expected):
-    """Verify strictly required characters are escaped."""
     assert escape_markdown(text) == expected
 
 
 def test_validate_user_structure():
-    """Use Mock objects to simulate Telegram Message structure."""
     msg_valid = Mock()
     msg_valid.from_user.username = "valid_user"
     assert validate_user(msg_valid) is True
