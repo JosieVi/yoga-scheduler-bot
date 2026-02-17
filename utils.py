@@ -1,7 +1,8 @@
 from datetime import datetime, timedelta
 
+
 def get_user_offset(username: str, user_dict: dict) -> float:
-    """Get timezone offset (hours) for a username from provided dict."""
+    """Return timezone offset in hours for the given username."""
     if not username:
         return 0.0
     try:
@@ -9,12 +10,14 @@ def get_user_offset(username: str, user_dict: dict) -> float:
     except (TypeError, ValueError):
         return 0.0
 
+
 def convert_utc_to_local(dt_utc: datetime, user_offset: float) -> datetime:
-    """Convert UTC datetime to local time using hour offset."""
+    """Convert naive UTC datetime to local time using hour offset."""
     return dt_utc + timedelta(hours=user_offset)
 
+
 def format_time(seconds: int) -> str:
-    """Format seconds as human-friendly minutes/seconds string."""
+    """Format seconds as a human-friendly minutes/seconds string."""
     m, s = divmod(seconds, 60)
     if m > 0:
         return f"{m}:{s:02d} min"
@@ -28,7 +31,7 @@ def format_time_compact(seconds: int) -> str:
 
 
 def escape_markdown(text: str) -> str:
-    """Escape basic Markdown special characters in usernames/text."""
+    """Escape basic Markdown special characters in text."""
     return text.replace("_", "\\_").replace("*", "\\*")
 
 
@@ -38,20 +41,19 @@ def to_seconds(val: str | int) -> int:
     Supports: '1:10 min', '2:00', '50 sec', '10', '5 min'
     """
     s = str(val).lower()
-    
+
     if ":" in s:
-        # Удаляем любые буквы, оставляем только цифры и двоеточие
         clean_val = s.replace("min", "").replace("sec", "").strip()
         minutes, seconds = map(int, clean_val.split(":"))
         return minutes * 60 + seconds
-    
+
     if "min" in s:
         clean_val = s.replace("min", "").strip()
         return int(clean_val) * 60
-        
+
     clean_val = s.replace("sec", "").strip()
     return int(clean_val)
 
 
-def validate_user(message) -> bool: # Using message from aiogram.types
+def validate_user(message) -> bool:  # Using message from aiogram.types
     return bool(message.from_user and message.from_user.username)

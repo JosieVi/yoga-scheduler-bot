@@ -13,7 +13,7 @@ from config import (
 
 
 def get_week_keyboard() -> types.InlineKeyboardMarkup:
-    """Keyboard for selecting one of the next 7 days."""
+    """Build keyboard for selecting one of the next seven days."""
     builder = InlineKeyboardBuilder()
     now = datetime.now()
 
@@ -34,7 +34,15 @@ def get_week_keyboard() -> types.InlineKeyboardMarkup:
 def get_yoga_time_keyboard(
     user_offset: float, chosen_date: datetime
 ) -> types.InlineKeyboardMarkup:
-    """Keyboard for yoga time slots converted from UTC to user's local time."""
+    """Build keyboard with yoga time slots in user's local time.
+
+    Args:
+        user_offset: User timezone offset from UTC, in hours.
+        chosen_date: Selected date in UTC.
+
+    Returns:
+        Inline keyboard with time options bound to UTC slots.
+    """
     builder = InlineKeyboardBuilder()
 
     for utc_time in DEFAULT_SLOTS_UTC:
@@ -54,15 +62,12 @@ def get_yoga_time_keyboard(
 
 
 def get_yoga_attendance_keyboard() -> types.InlineKeyboardMarkup:
-    """Keyboard for confirming / rejecting yoga attendance."""
+    """Build keyboard for confirming or rejecting yoga attendance."""
     builder = InlineKeyboardBuilder()
     builder.button(text=YOGA_BTN_IM_IN, callback_data="approve")
     builder.button(text=YOGA_BTN_NOT_GOING, callback_data="reject")
     builder.adjust(2)
     builder.row(
-        types.InlineKeyboardButton(
-            text=YOGA_BTN_DELETE, callback_data="cancel_session"
-        )
+        types.InlineKeyboardButton(text=YOGA_BTN_DELETE, callback_data="cancel_session")
     )
     return builder.as_markup()
-

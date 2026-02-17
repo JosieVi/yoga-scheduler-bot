@@ -1,14 +1,12 @@
-import asyncio
 import logging
 import random
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
-from aiogram import Bot, Router, types, F
+from aiogram import F, Router, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
-from aiogram.types import Message, TelegramObject
+from aiogram.types import Message
 from aiogram.exceptions import TelegramRetryAfter, TelegramBadRequest
-from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from config import (
     MIN_PARTICIPANTS,
@@ -26,7 +24,6 @@ from config import (
     YOGA_TEXT_SESSION_CONFIRMED,
     YOGA_TEXT_SESSION_NEED_MORE,
 )
-from states import YogaState
 from views.yoga import (
     get_week_keyboard,
     get_yoga_time_keyboard,
@@ -38,14 +35,11 @@ logger = logging.getLogger(__name__)
 
 yoga_router = Router()
 
-# Global dictionary to store ongoing yoga sessions' attendance
 yoga_sessions = {}
+
 
 @yoga_router.message(Command("yoga"))
 async def cmd_yoga(message: Message, state: FSMContext, yoga_users_map: dict):
-    """
-    Initiates the yoga session planning process. Clears current state and prompts user to select a day.
-    """
     await state.clear()
     if not validate_user(message):
         await message.answer(YOGA_TEXT_USERNAME_REQUIRED)
@@ -60,23 +54,19 @@ async def cmd_yoga(message: Message, state: FSMContext, yoga_users_map: dict):
 
 @yoga_router.callback_query(F.data == "cancel_calendar")
 async def process_cancel_calendar(callback: types.CallbackQuery, state: FSMContext):
-    """
-    Cancels the calendar interaction, clears the state, and deletes the message.
-    """
     await state.clear()
     try:
         await callback.message.delete()
-    except Exception as e:
-        logger.debug("Failed to delete calendar message: %s", e)
+    except (TelegramBadRequest, TelegramRetryAfter) as exc:
+        logger.debug("Failed to delete calendar message: %s", exc)
         await callback.answer(YOGA_TEXT_WINDOW_CLOSED)
     await callback.answer()
 
 
 @yoga_router.callback_query(F.data.startswith("day_"))
-async def process_day_selection(callback: types.CallbackQuery, state: FSMContext, yoga_users_map: dict):
-    """
-    Shows available time slots for booking on the selected day based on the user's timezone.
-    """
+async def process_day_selection(
+    callback: types.CallbackQuery, state: FSMContext, yoga_users_map: dict
+):
     date_str = callback.data.split("_")[1]
     selected_date = datetime.strptime(date_str, "%Y-%m-%d")
 
@@ -94,9 +84,6 @@ async def process_day_selection(callback: types.CallbackQuery, state: FSMContext
 
 @yoga_router.callback_query(F.data == "back_to_weeks")
 async def process_back_to_weeks(callback: types.CallbackQuery, state: FSMContext):
-    """
-    Returns the user to the day of the week selection menu.
-    """
     await callback.message.edit_text(
         YOGA_TEXT_PLANNING_TITLE,
         reply_markup=get_week_keyboard(),
@@ -106,10 +93,9 @@ async def process_back_to_weeks(callback: types.CallbackQuery, state: FSMContext
 
 
 @yoga_router.callback_query(F.data.startswith("time_"))
-async def process_time_button(callback: types.CallbackQuery, state: FSMContext, yoga_users_map: dict):
-    """
-    Processes time selection, calculates local times for all users, and shows the confirmation summary.
-    """
+async def process_time_button(
+    callback: types.CallbackQuery, state: FSMContext, yoga_users_map: dict
+):
     if not isinstance(callback.message, Message) or not callback.from_user:
         return
 
@@ -123,13 +109,11 @@ async def process_time_button(callback: types.CallbackQuery, state: FSMContext, 
 
     dt_utc = chosen_date.replace(hour=utc_h, minute=utc_m)
 
-    results = []
-    for user_login, user_offset in yoga_users_map.items():  # Use the passed map
-        user_dt = convert_utc_to_local(dt_utc, float(user_offset))
-        escaped_login = escape_markdown(user_login)
-        results.append(f"📍 {escaped_login}: {user_dt.strftime('%H:%M')}")
-
-    times_list = "\n".join(results)
+    times_list = "\n".join(
+        f"📍 {escape_markdown(user_login)}: "
+        f"{convert_utc_to_local(dt_utc, float(user_offset)).strftime('%H:%M')}"
+        for user_login, user_offset in yoga_users_map.items()
+    )
 
     await callback.message.edit_text(
         YOGA_TEXT_SESSION_SUMMARY.format(
@@ -144,17 +128,13 @@ async def process_time_button(callback: types.CallbackQuery, state: FSMContext, 
 
 @yoga_router.callback_query(F.data == "cancel_session")
 async def process_cancel_session(callback: types.CallbackQuery, state: FSMContext):
-    """
-    Processes the 'Delete' button click, resets the FSM state, and deletes the session message.
-    """
     await state.clear()
     try:
         await callback.message.delete()
-        # Clean up session data if message is deleted
         if callback.message.message_id in yoga_sessions:
             del yoga_sessions[callback.message.message_id]
-    except Exception as e:
-        logger.debug("Failed to delete session message: %s", e)
+    except (TelegramBadRequest, TelegramRetryAfter) as exc:
+        logger.debug("Failed to delete session message: %s", exc)
         await callback.answer(YOGA_TEXT_MESSAGE_DELETED)
 
     await callback.answer(YOGA_TEXT_PLANNING_CANCELLED)
@@ -162,9 +142,6 @@ async def process_cancel_session(callback: types.CallbackQuery, state: FSMContex
 
 @yoga_router.callback_query(F.data.in_(["approve", "reject"]))
 async def handle_attendance(callback: types.CallbackQuery):
-    """
-    Processes 'Going' or 'Cannot go' button clicks and updates the participant lists for the session.
-    """
     msg_id = callback.message.message_id
     user_name = callback.from_user.first_name
     action = callback.data
@@ -191,9 +168,7 @@ async def handle_attendance(callback: types.CallbackQuery):
 
 
 async def update_session_message(callback: types.CallbackQuery):
-    """
-    Updates the session message text with the current list of participants and status.
-    """
+    # TODO: Persist session state instead of keeping it only in memory.
     msg_id = callback.message.message_id
     session = yoga_sessions.get(msg_id, {"going": set(), "not_going": set()})
 
@@ -223,9 +198,7 @@ async def update_session_message(callback: types.CallbackQuery):
         )
     else:
         needed = MIN_PARTICIPANTS - count_going
-        confirmation_text = "\n\n" + YOGA_TEXT_SESSION_NEED_MORE.format(
-            needed=needed
-        )
+        confirmation_text = "\n\n" + YOGA_TEXT_SESSION_NEED_MORE.format(needed=needed)
 
     final_text = f"{base_text}\n\n{status_section}{confirmation_text}"
 

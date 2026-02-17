@@ -1,42 +1,59 @@
-import sys
-import os
-from pathlib import Path
-
-# Add parent directory to path so we can import from the bot
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
 import pytest
+import asyncio
+import aiosqlite
+from datetime import date, timedelta
+from db import database as db
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="session")
+def test_db_path(tmp_path_factory):
+    temp_dir = tmp_path_factory.mktemp("test_data")
+    return temp_dir / "TEST_yoga_community.db"
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def initialize_test_db_schema(test_db_path):
+    original_db_name = db.DB_NAME
+    db.DB_NAME = str(test_db_path)
+
+    if hasattr(db, "init_db"):
+        await db.init_db()
+
+    yield
+
+    db.DB_NAME = original_db_name
+
+
+@pytest.fixture(autouse=True)
+async def isolated_db_session(monkeypatch, test_db_path):
+    monkeypatch.setattr(db, "DB_NAME", str(test_db_path))
+
+    yield
+
+    async with aiosqlite.connect(str(test_db_path)) as conn:
+        try:
+            await conn.execute("DELETE FROM plank_history")
+
+            await conn.execute("DELETE FROM sqlite_sequence WHERE name='plank_history'")
+
+            await conn.commit()
+        except Exception:
+            pass
 
 
 @pytest.fixture
 def sample_user_map():
-    """Fixture providing sample user timezone map."""
-    return {
-        "john": 3.5,
-        "alice": -5.0,
-        "bob": 0.0,
-    }
+    return {"mark": 3, "ivan": -5, "grigoriy": 0}
 
 
 @pytest.fixture
 def sample_plank_data():
-    """Fixture providing sample plank history data."""
-    return [
-        ("2025-10-01", 60),
-        ("2025-10-02", 75),
-        ("2025-10-03", 65),
-        ("2025-10-04", 80),
-        ("2025-10-05", 90),
-    ]
-
-
-@pytest.fixture
-def sample_raw_plank_data():
-    """Fixture providing raw plank data (multiple entries per date)."""
-    return [
-        ("2025-10-05", 60),
-        ("2025-10-05", 45),
-        ("2025-10-04", 75),
-        ("2025-10-03", 60),
-        ("2025-10-03", 55),
-    ]
+    today = date.today()
+    return [((today - timedelta(days=i)).isoformat(), 60 + i * 5) for i in range(5)]

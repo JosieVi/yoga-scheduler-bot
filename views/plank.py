@@ -1,6 +1,6 @@
-from datetime import datetime, timedelta
 import io
 import math
+from datetime import datetime
 
 from aiogram import types
 from aiogram.utils.keyboard import InlineKeyboardBuilder
@@ -9,7 +9,6 @@ import matplotlib.dates as mdates
 
 from utils import format_time
 from config import (
-    PLANK_INITIAL_SECONDS,
     PLANK_BTN_CONFIRM,
     PLANK_BTN_DELETE,
     PLANK_BTN_BACK,
@@ -21,13 +20,7 @@ from config import (
 def get_plank_slider_keyboard(
     seconds: int, record_id: int | None = None
 ) -> types.InlineKeyboardMarkup:
-    """
-    Inline keyboard for adjusting plank time.
-
-    Args:
-        seconds: current plank duration in seconds.
-        record_id: optional record id for delete callback.
-    """
+    """Build inline keyboard for adjusting plank time."""
     builder = InlineKeyboardBuilder()
 
     time_str = format_time(seconds)
@@ -62,7 +55,7 @@ def get_plank_slider_keyboard(
 
 
 def get_plank_result_keyboard(record_id: int) -> types.InlineKeyboardMarkup:
-    """Keyboard shown after saving plank result."""
+    """Build keyboard shown after saving plank result."""
     builder = InlineKeyboardBuilder()
     builder.button(text=PLANK_BTN_DELETE, callback_data=f"cancel_plank:{record_id}")
     builder.button(text=PLANK_BTN_BACK, callback_data=f"back_to_plank:{record_id}")
@@ -71,45 +64,27 @@ def get_plank_result_keyboard(record_id: int) -> types.InlineKeyboardMarkup:
 
 
 def get_plank_stats_keyboard() -> types.InlineKeyboardMarkup:
-    """Keyboard for main statistics message."""
+    """Build keyboard for the main statistics message."""
     builder = InlineKeyboardBuilder()
     builder.button(text=PLANK_BTN_DETAILS, callback_data="show_stats_details")
     return builder.as_markup()
 
 
 def get_plank_stats_details_keyboard() -> types.InlineKeyboardMarkup:
-    """Keyboard for detailed statistics view."""
+    """Build keyboard for detailed statistics view."""
     builder = InlineKeyboardBuilder()
     builder.button(text=PLANK_BTN_HIDE, callback_data="hide_stats_details")
     return builder.as_markup()
 
 
-def generate_plank_graph(seconds: int, days: int = 7) -> io.BytesIO:
-    """
-    Generates a plank graph with constant value `seconds` across `days`.
+def generate_progress_graph(points: list[tuple[datetime, int]]) -> io.BytesIO | None:
+    """Generate progress graph for plank results.
+
+    Args:
+        points: List of `(timestamp, duration_seconds)` pairs.
 
     Returns:
-        BytesIO buffer with PNG image.
-    """
-    dates = [datetime.now() + timedelta(days=i) for i in range(days)]
-    plank_times = [seconds] * days
-
-    plt.figure(figsize=(10, 5))
-    plt.plot(dates, plank_times, marker="o")
-
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter("%Y-%m-%d"))
-    plt.tight_layout()
-
-    output = io.BytesIO()
-    plt.savefig(output, format="png")
-    output.seek(0)
-    return output
-
-
-def generate_progress_graph(points: list[tuple[datetime, int]]) -> io.BytesIO | None:
-    """
-    Generates a progress graph from prepared (datetime, seconds) points.
-    Y-axis: fixed intervals every 10 seconds, from (min - 10) to (max + 10).
+        PNG image buffer with the graph, or None if there is no data.
     """
     if not points:
         return None
@@ -161,4 +136,3 @@ def generate_progress_graph(points: list[tuple[datetime, int]]) -> io.BytesIO | 
     buf.seek(0)
 
     return buf
-

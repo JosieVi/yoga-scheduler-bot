@@ -1,14 +1,17 @@
-"""
-Configuration file for the Yoga & Plank Community Bot.
-Centralized constants and settings.
-"""
+"""Central configuration for the Yoga & Plank bot."""
 
 # --- Database ---
 DB_NAME = "yoga_community.db"
 
 # --- Yoga Configuration ---
 MIN_PARTICIPANTS = 2  # Minimum participants needed to confirm a yoga session
-DEFAULT_SLOTS_UTC = ["16:00", "16:30", "17:00", "17:30", "18:00"]  # Available time slots in UTC
+DEFAULT_SLOTS_UTC = [
+    "16:00",
+    "16:30",
+    "17:00",
+    "17:30",
+    "18:00",
+]  # Available time slots in UTC
 
 YOGA_JOKES = [
     "I work out… so I can eat more later 🍕",
@@ -35,7 +38,7 @@ YOGA_JOKES = [
     "I do yoga to lie on the mat and breathe 🌬️",
     "My muscles wake up angry the next day 😠",
     "I train so my clothes still like me 👕",
-    "Exercise is my way to balance pizza 🍕⚖️", 
+    "Exercise is my way to balance pizza 🍕⚖️",
     "I move fast… in my dreams 😴",
     "Gym mirrors always lie 🪞",
     "I don’t skip leg day. I just forget 😇",
@@ -47,12 +50,12 @@ YOGA_JOKES = [
     "I do squats to sit better later 🪑",
     "Sport teaches patience… and pain 😄",
     "I lift weights so gravity knows I’m strong 🌍",
-    "My body is fit… fit for a nap 😴",             
+    "My body is fit… fit for a nap 😴",
     "I exercise to feel tired in a new way 🤷",
     "Sweat now, shower later 🚿",
     "I run to escape my problems. They run faster 😆",
     "Gym music makes me stronger… a little 🎧",
-    "I stretch and hope for the best 🤞"
+    "I stretch and hope for the best 🤞",
     "My balance is good. The floor just moves 🤔",
     "I train because sitting all day is boring 🪑",
     "One more rep? Let me think… no 😄",
@@ -72,9 +75,7 @@ YOGA_TEXT_PLANNING_TITLE = "📅 **Planning a session**\nChoose a day:"
 YOGA_TEXT_TIME_TITLE = "📅 **{date}**\nChoose time:"
 
 YOGA_TEXT_SESSION_SUMMARY = (
-    "🧘 **Yoga {date}** (base UTC {utc_time})\n\n"
-    "{times}\n\n"
-    "Shall we confirm?"
+    "🧘 **Yoga {date}** (base UTC {utc_time})\n\n{times}\n\nShall we confirm?"
 )
 
 YOGA_TEXT_WINDOW_CLOSED = "Window closed"
@@ -84,9 +85,7 @@ YOGA_TEXT_PLANNING_CANCELLED = "Planning cancelled"
 YOGA_TEXT_ALREADY_GOING = "You are already on the list! 😉"
 YOGA_TEXT_ALREADY_NOT_GOING = "You have already marked that you won't come."
 
-YOGA_TEXT_STATUS_SECTION = (
-    "✅ Who is going: {going}\n❌ Can't make it: {not_going}"
-)
+YOGA_TEXT_STATUS_SECTION = "✅ Who is going: {going}\n❌ Can't make it: {not_going}"
 
 YOGA_TEXT_SESSION_CONFIRMED = (
     "🎉 **Session confirmed!** (gathered {count}/{min_participants})\n"
@@ -94,9 +93,7 @@ YOGA_TEXT_SESSION_CONFIRMED = (
     "✨ _{joke}_"
 )
 
-YOGA_TEXT_SESSION_NEED_MORE = (
-    "⏳ Need at least {needed} more people to confirm."
-)
+YOGA_TEXT_SESSION_NEED_MORE = "⏳ Need at least {needed} more people to confirm."
 
 # --- Yoga Buttons ---
 YOGA_BTN_BACK_TO_DATES = "⬅️ Back to dates"
@@ -105,8 +102,8 @@ YOGA_BTN_NOT_GOING = "🏃‍♂️ Not going"
 YOGA_BTN_DELETE = "❌ Delete"
 
 # --- Plank Configuration ---
-PLANK_MIN_SECONDS = 10  # Minimum plank duration in seconds
-PLANK_INITIAL_SECONDS = 60  # Default starting plank duration
+PLANK_MIN_SECONDS = 10
+PLANK_INITIAL_SECONDS = 60
 
 PLANK_MOTIVATION = [
     "Great effort! Keep pushing your limits! 💪",
@@ -158,10 +155,7 @@ PLANK_MOTIVATION = [
 # --- Plank Messages & Texts ---
 PLANK_TEXT_USERNAME_REQUIRED = "❌ Set a Username in Telegram!"
 
-PLANK_TEXT_CHALLENGE_TITLE = (
-    "💪 **Plank Challenge**\n"
-    "{user_name}, adjust your result:"
-)
+PLANK_TEXT_CHALLENGE_TITLE = "💪 **Plank Challenge**\n{user_name}, adjust your result:"
 
 PLANK_TEXT_DELETE_SUCCESS = "Result deleted 🗑"
 PLANK_TEXT_DELETE_NONE = "No record to delete."
@@ -185,9 +179,7 @@ PLANK_TEXT_STATS_TAGLINE = "<i>The more you do, the easier it gets!</i> 💪"
 PLANK_TEXT_NO_DATA = "No data yet"
 PLANK_TEXT_DETAILS_HEADER = "📝 **Attempt History (30 days):**\n\n"
 
-PLANK_TEXT_GRAPH_NO_DATA = (
-    "No data for graph yet! Complete at least one plank."
-)
+PLANK_TEXT_GRAPH_NO_DATA = "No data for graph yet! Complete at least one plank."
 PLANK_TEXT_GRAPH_CAPTION = "📈 Your Progress Graph"
 PLANK_TEXT_GRAPH_ERROR = "Error creating graph."
 

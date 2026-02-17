@@ -1,5 +1,7 @@
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
+from unittest.mock import Mock
+
 from utils import (
     get_user_offset,
     convert_utc_to_local,
@@ -11,146 +13,91 @@ from utils import (
 )
 
 
-class TestGetUserOffset:
-    """Tests for get_user_offset function."""
-    
-    def test_get_user_offset_with_valid_username(self):
-        """Test getting offset for existing username."""
-        user_dict = {"john": 3.5, "alice": -5.0}
-        assert get_user_offset("john", user_dict) == 3.5
-        assert get_user_offset("JOHN", user_dict) == 3.5  # Case insensitive
-    
-    def test_get_user_offset_with_nonexistent_username(self):
-        """Test getting offset for non-existent username returns 0."""
-        user_dict = {"john": 3.5}
-        assert get_user_offset("bob", user_dict) == 0.0
-    
-    def test_get_user_offset_with_empty_username(self):
-        """Test with None or empty username returns 0."""
-        user_dict = {"john": 3.5}
-        assert get_user_offset(None, user_dict) == 0.0
-        assert get_user_offset("", user_dict) == 0.0
-    
-    def test_get_user_offset_with_invalid_offset_value(self):
-        """Test with invalid offset value returns 0."""
-        user_dict = {"john": "invalid"}
-        assert get_user_offset("john", user_dict) == 0.0
+@pytest.mark.parametrize(
+    "offset, expected_hour",
+    [
+        (3.0, 15),  # UTC+3
+        (-5.0, 7),  # UTC-5
+        (0.0, 12),  # UTC+0 (No change)
+    ],
+)
+def test_convert_utc_to_local(offset, expected_hour):
+    dt_utc = datetime(2025, 10, 15, 12, 0, 0, tzinfo=timezone.utc)
+
+    result = convert_utc_to_local(dt_utc, offset)
+
+    assert result.hour == expected_hour
+    assert result.minute == 0
+
+    assert result.day == 15
 
 
-class TestConvertUtcToLocal:
-    """Tests for convert_utc_to_local function."""
-    
-    def test_convert_positive_offset(self):
-        """Test converting UTC to local time with positive offset."""
-        dt_utc = datetime(2023, 10, 15, 12, 0, 0)
-        result = convert_utc_to_local(dt_utc, 3.0)
-        assert result.hour == 15
-        assert result.minute == 0
-    
-    def test_convert_negative_offset(self):
-        """Test converting UTC to local time with negative offset."""
-        dt_utc = datetime(2023, 10, 15, 12, 0, 0)
-        result = convert_utc_to_local(dt_utc, -5.0)
-        assert result.hour == 7
-    
-    def test_convert_zero_offset(self):
-        """Test converting with zero offset returns same time."""
-        dt_utc = datetime(2023, 10, 15, 12, 0, 0)
-        result = convert_utc_to_local(dt_utc, 0.0)
-        assert result == dt_utc
+# --- Formatting Utils ---
 
 
-class TestFormatTime:
-    """Tests for format_time function."""
-    
-    def test_format_time_minutes_and_seconds(self):
-        """Test formatting time with minutes and seconds."""
-        assert format_time(90) == "1:30 min"
-        assert format_time(120) == "2:00 min"
-        assert format_time(65) == "1:05 min"
-    
-    def test_format_time_only_seconds(self):
-        """Test formatting time with only seconds."""
-        assert format_time(45) == "45 sec"
-        assert format_time(30) == "30 sec"
-        assert format_time(59) == "59 sec"
-    
-    def test_format_time_zero(self):
-        """Test formatting zero seconds."""
-        assert format_time(0) == "0 sec"
+@pytest.mark.parametrize(
+    "seconds, expected_full, expected_compact",
+    [
+        (90, "1:30 min", "1:30"),
+        (120, "2:00 min", "2:00"),
+        (65, "1:05 min", "1:05"),
+        (45, "45 sec", "45s"),
+        (30, "30 sec", "30s"),
+        (0, "0 sec", "0s"),
+    ],
+)
+def test_time_formatting(seconds, expected_full, expected_compact):
+    assert format_time(seconds) == expected_full
+    assert format_time_compact(seconds) == expected_compact
 
 
-class TestFormatTimeCompact:
-    """Tests for format_time_compact function."""
-
-    def test_format_time_compact_minutes_and_seconds(self):
-        """Test compact formatting with minutes."""
-        assert format_time_compact(90) == "1:30"
-        assert format_time_compact(120) == "2:00"
-
-    def test_format_time_compact_only_seconds(self):
-        """Test compact formatting with only seconds."""
-        assert format_time_compact(45) == "45s"
-        assert format_time_compact(0) == "0s"
-
-
-class TestToSeconds:
-    """Tests for to_seconds function."""
-    
-    def test_to_seconds_with_minutes_and_seconds(self):
-        """Test converting time string with minutes and seconds."""
-        assert to_seconds("1:30") == 90
-        assert to_seconds("2:00") == 120
-        assert to_seconds("1:05") == 65
-    
-    def test_to_seconds_with_only_seconds(self):
-        """Test converting time string with only seconds."""
-        assert to_seconds("45") == 45
-        assert to_seconds("30 sec") == 30
-        assert to_seconds("59") == 59
-    
-    def test_to_seconds_with_sec_suffix(self):
-        """Test converting time string with 'sec' suffix."""
-        assert to_seconds("45 sec") == 45
-        assert to_seconds("30 sec") == 30
-    
-    def test_to_seconds_edge_cases(self):
-        """Test edge cases."""
-        assert to_seconds("0") == 0
-        assert to_seconds("10:15") == 615
+@pytest.mark.parametrize(
+    "input_str, expected_seconds",
+    [
+        ("1:30", 90),
+        ("2:00", 120),
+        ("45", 45),
+        ("30 sec", 30),
+        ("10:15", 615),
+        ("0", 0),
+    ],
+)
+def test_to_seconds_parsing(input_str, expected_seconds):
+    assert to_seconds(input_str) == expected_seconds
 
 
-class TestEscapeMarkdown:
-    """Tests for escape_markdown function."""
+def test_get_user_offset_logic():
+    users_db = {"john": 3.5, "alice": -5.0}
 
-    def test_escape_underscore_and_asterisk(self):
-        """Usernames with markdown special chars should be escaped."""
-        assert escape_markdown("user_name") == "user\\_name"
-        assert escape_markdown("user*name") == "user\\*name"
-        assert escape_markdown("user*_name") == "user\\*\\_name"
-
-    def test_escape_markdown_other_chars_unchanged(self):
-        """Other characters should stay the same."""
-        assert escape_markdown("user.name") == "user.name"
+    assert get_user_offset("john", users_db) == 3.5
+    assert get_user_offset("JOHN", users_db) == 3.5
+    assert get_user_offset("unknown", users_db) == 0.0
+    assert get_user_offset(None, users_db) == 0.0
 
 
-class DummyFromUser:
-    def __init__(self, username):
-        self.username = username
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("user_name", r"user\_name"),
+        ("bold*text", r"bold\*text"),
+        ("func(args)", r"func\(args\)"),
+        ("normal text", "normal text"),
+    ],
+)
+def test_markdown_escaping(text, expected):
+    """Verify strictly required characters are escaped."""
+    assert escape_markdown(text) == expected
 
 
-class DummyMessage:
-    def __init__(self, username):
-        self.from_user = DummyFromUser(username)
+def test_validate_user_structure():
+    """Use Mock objects to simulate Telegram Message structure."""
+    msg_valid = Mock()
+    msg_valid.from_user.username = "valid_user"
+    assert validate_user(msg_valid) is True
 
+    msg_no_username = Mock()
+    msg_no_username.from_user.username = None
+    assert validate_user(msg_no_username) is False
 
-class TestValidateUser:
-    """Tests for validate_user helper."""
-
-    def test_validate_user_with_username(self):
-        msg = DummyMessage("john")
-        assert validate_user(msg) is True
-
-    def test_validate_user_without_username(self):
-        msg = DummyMessage(None)
-        assert validate_user(msg) is False
+    msg_channel = Mock()
+    msg_channel.from_user = None

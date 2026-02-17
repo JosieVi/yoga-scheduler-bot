@@ -24,13 +24,12 @@ if not API_TOKEN:
 
 
 def load_users(filename: str) -> dict:
-    """Load user timezone offsets from JSON file. Returns empty dict on error."""
+    """Load timezone offsets from JSON file or return empty dict on error."""
     try:
-        if os.path.exists(filename):
-            with open(filename, "r", encoding="utf-8") as f:
-                return json.load(f)
-    except (json.JSONDecodeError, IOError) as e:
-        logging.warning(f"Failed to load {filename}: {e}")
+        with open(filename, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError, IOError) as e:
+        logger.warning("Failed to load %s: %s", filename, e)
     return {}
 
 
@@ -39,9 +38,7 @@ PLANK_USERS = load_users("users_plank.json")
 
 
 # --- LOGGER & BOT SETUP ---
-logging.basicConfig(
-    level=LOG_LEVEL, format=LOG_FORMAT
-)
+logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
 logger = logging.getLogger(__name__)
 
 bot = Bot(token=API_TOKEN)
@@ -49,7 +46,9 @@ dp = Dispatcher(storage=MemoryStorage())
 
 
 # Register Middleware with loaded user data
-dp.update.outer_middleware(AccessMiddleware(yoga_users=YOGA_USERS, plank_users=PLANK_USERS))
+dp.update.outer_middleware(
+    AccessMiddleware(yoga_users=YOGA_USERS, plank_users=PLANK_USERS)
+)
 
 
 # Assign user maps to dispatcher context
@@ -65,9 +64,7 @@ dp.include_router(plank_router)
 # --- HANDLERS (main commands) ---
 @dp.message(Command("shutdown"))
 async def cmd_shutdown(message: Message, yoga_users_map: dict):
-    """
-    Processes the /shutdown command to turn off the bot. Only the first user in config can execute this.
-    """
+    """Shut down the bot if the caller is the configured admin."""
     if not validate_user(message):
         await message.answer("❌ Set a Username in Telegram!")
         return
@@ -87,16 +84,13 @@ async def cmd_shutdown(message: Message, yoga_users_map: dict):
 
 # --- STARTUP ---
 async def main():
-    """
-    Entry point for the bot. Starts the polling loop.
-    """
+    """Start the bot and run the polling loop."""
     await init_db()
 
-    # Convert BOT_COMMANDS to BotCommand objects
     commands = [BotCommand(command=cmd, description=desc) for cmd, desc in BOT_COMMANDS]
     await bot.set_my_commands(commands)
 
-    print("🚀 Bot started and Database initialized!")
+    logger.info("🚀 Bot started and Database initialized!")
     await dp.start_polling(bot)
 
 
