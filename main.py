@@ -16,7 +16,6 @@ from handlers.yoga import yoga_router
 from handlers.plank import plank_router
 from utils import validate_user
 
-# --- CONFIGURATION ---
 load_dotenv()
 API_TOKEN = os.getenv("BOT_TOKEN")
 if not API_TOKEN:
@@ -37,7 +36,6 @@ YOGA_USERS = load_users("users_yoga.json")
 PLANK_USERS = load_users("users_plank.json")
 
 
-# --- LOGGER & BOT SETUP ---
 logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
 logger = logging.getLogger(__name__)
 
@@ -45,23 +43,19 @@ bot = Bot(token=API_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
 
-# Register Middleware with loaded user data
 dp.update.outer_middleware(
     AccessMiddleware(yoga_users=YOGA_USERS, plank_users=PLANK_USERS)
 )
 
 
-# Assign user maps to dispatcher context
 dp["yoga_users_map"] = YOGA_USERS
 dp["plank_users_map"] = PLANK_USERS
 
 
-# Register routers
 dp.include_router(yoga_router)
 dp.include_router(plank_router)
 
 
-# --- HANDLERS (main commands) ---
 @dp.message(Command("shutdown"))
 async def cmd_shutdown(message: Message, yoga_users_map: dict):
     """Shut down the bot if the caller is the configured admin."""
@@ -82,7 +76,6 @@ async def cmd_shutdown(message: Message, yoga_users_map: dict):
         await message.answer("🚫 You don't have permission to shut down the bot.")
 
 
-# --- STARTUP ---
 async def main():
     """Start the bot and run the polling loop."""
     await init_db()
