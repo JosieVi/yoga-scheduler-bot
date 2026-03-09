@@ -73,16 +73,15 @@ async def get_user_stats(user_id):
 
 
 async def get_plank_history(user_id):
-    """Return last 30 plank entries as (date, seconds) tuples."""
+    """Return plank entries for the last 30 days as (date, seconds) tuples."""
     async with aiosqlite.connect(DB_NAME) as db:
         async with db.execute(
             """
             SELECT date, duration
             FROM plank_history
-            WHERE user_id = ?
+            WHERE user_id = ? AND date >= date('now', '-30 days')
             ORDER BY date ASC
-            LIMIT 30
-        """,
+            """,
             (user_id,),
         ) as cursor:
             rows = await cursor.fetchall()
