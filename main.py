@@ -66,9 +66,15 @@ async def cmd_shutdown(message: Message, yoga_users_map: dict):
     user_keys = list(yoga_users_map.keys())
     admin_username = user_keys[0] if user_keys else ""
 
-    if message.from_user.username.lower() == admin_username:
+    current_username = (
+        message.from_user.username.lower()
+        if message.from_user and message.from_user.username
+        else ""
+    )
+
+    if current_username == admin_username:
         await message.answer("🛑 Bot shut down.")
-        logger.info("Bot shutdown initiated by admin: %s", message.from_user.username)
+        logger.info("Bot shutdown initiated by admin: %s", current_username)
         await bot.session.close()
         await dp.stop_polling()
         os._exit(0)

@@ -1,17 +1,18 @@
 """Central configuration for the Yoga & Plank bot."""
 
-# --- Database ---
 DB_NAME = "yoga_community.db"
 
-# --- Yoga Configuration ---
-MIN_PARTICIPANTS = 2  # Minimum participants needed to confirm a yoga session
+MIN_PARTICIPANTS = 2
 DEFAULT_SLOTS_UTC = [
-    "16:00",
+    "05:40",
+    "06:00",
+    "06:30",
+    "06:40",
     "16:30",
     "17:00",
     "17:30",
     "18:00",
-]  # Available time slots in UTC
+]
 
 YOGA_JOKES = [
     "I work out… so I can eat more later 🍕",
@@ -68,7 +69,6 @@ YOGA_JOKES = [
     "My muscles need coffee too ☕",
 ]
 
-# --- Yoga Messages & Texts ---
 YOGA_TEXT_USERNAME_REQUIRED = "❌ Set a Username in Telegram!"
 
 YOGA_TEXT_PLANNING_TITLE = "📅 **Planning a session**\nChoose a day:"
@@ -95,64 +95,31 @@ YOGA_TEXT_SESSION_CONFIRMED = (
 
 YOGA_TEXT_SESSION_NEED_MORE = "⏳ Need at least {needed} more people to confirm."
 
-# --- Yoga Buttons ---
 YOGA_BTN_BACK_TO_DATES = "⬅️ Back to dates"
 YOGA_BTN_IM_IN = "🙋‍♂️ I'm in"
 YOGA_BTN_NOT_GOING = "🏃‍♂️ Not going"
 YOGA_BTN_DELETE = "❌ Delete"
 
-# --- Plank Configuration ---
 PLANK_MIN_SECONDS = 10
 PLANK_INITIAL_SECONDS = 60
 
-PLANK_MOTIVATION = [
-    "Great effort! Keep pushing your limits! 💪",
-    "You're getting stronger every day! 🎯",
-    "Consistency is key! Come back tomorrow! 🔥",
-    "Amazing performance! 🏆",
-    "Great effort! Keep your breath calm, 🧘",
-    "Strong body, calm mind, always, 💪",
-    "You are doing really great today, 🌿",
-    "Balance improves with every practice, ⚖️",
-    "Breathe in calm, breathe out stress, 🌬️",
-    "Slow moves bring strong results, 🧠",
-    "Your focus is getting better, ✨",
-    "Every pose makes you stronger, 🧍",
-    "Nice control, keep breathing smoothly, 😌",
-    "Your body trusts you more, 🤍",
-    "Small progress is still progress, 🌱",
-    "You showed up, that matters, 🙌",
-    "Calm breath, steady movement, good, 🧘",
-    "Your balance is improving today, ⭐",
-    "Gentle practice brings deep strength, 💫",
-    "You are moving with purpose, 🎯",
-    "Strong legs, relaxed shoulders, nice, 💪",
-    "Your patience grows with practice, 🕊️",
-    "Feel the stretch, enjoy it, 😊",
-    "Mind and body work together, 🧠💪",
-    "You are fully present now, 🌼",
-    "Each breath supports your movement, 🌬️",
-    "Your practice looks calm today, 😌",
-    "Nice flow, keep it smooth, 🌊",
-    "You are building inner strength, 🔥",
-    "Soft face, strong body, perfect, 🙂",
-    "Stay steady, stay kind, 🧘",
-    "Your focus is really strong, 🎯",
-    "Good balance comes with time, ⏳",
-    "You are learning with every pose, 📘",
-    "Breath leads, body follows, 🌬️",
-    "Calm effort brings best results, 🌿",
-    "You are doing enough today, 🤍",
-    "Nice stretch, stay relaxed, 😄",
-    "Your body feels your care, 💖",
-    "Slow practice builds deep power, 💪",
-    "You look calm and focused, ✨",
-    "Every breath makes you steadier, 🕊️",
-    "Good energy flows through you, 🌈",
-    "Practice complete, well done, 🙏",
+PLANK_MOTIVATION_OPTIONS = [
+    {
+        "image": "AgACAgIAAxkBAAIDJGmvP5_WS36VuASE5jEon2Ks6XO6AAIRHWsb8Pd4STaggWE2PjKMAQADAgADeQADOgQ",
+        "caption": "Time dilation expert. You survived! 🕰️",
+    },
+    {
+        "image": "AgACAgIAAxkBAAIDJmmvP6-3NTKTkmQ5yj_JFNuXWAAB0QACFB1rG_D3eElmSs9QsSnmlwEAAwIAA3kAAzoE",
+        "caption": "Gravity defeated. Core is legendary! 🏆",
+    },
+    {
+        "image": "AgACAgIAAxkBAAIDKGmvP7fSwJMTklZU53IRrCk5njXXAAIXHWsb8Pd4SYj_yeqb6fUTAQADAgADeQADOgQ",
+        "caption": "Abs of steel officially activated. 💎",
+    },
+    # {"image": "images/shake.png", "caption": "Earthquake? No, just your muscles! ⚡"},
+    # {"image": "images/rest.png", "caption": "Horizontal hero. Now go rest! 🛌"}
 ]
 
-# --- Plank Messages & Texts ---
 PLANK_TEXT_USERNAME_REQUIRED = "❌ Set a Username in Telegram!"
 
 PLANK_TEXT_CHALLENGE_TITLE = "💪 **Plank Challenge**\n{user_name}, adjust your result:"
@@ -183,14 +150,12 @@ PLANK_TEXT_GRAPH_NO_DATA = "No data for graph yet! Complete at least one plank."
 PLANK_TEXT_GRAPH_CAPTION = "📈 Your Progress Graph"
 PLANK_TEXT_GRAPH_ERROR = "Error creating graph."
 
-# --- Plank Buttons ---
 PLANK_BTN_DELETE = "❌ Delete"
 PLANK_BTN_BACK = "⬅️ Back"
 PLANK_BTN_CONFIRM = "✅ Confirm"
 PLANK_BTN_DETAILS = "📝 Details (Log)"
 PLANK_BTN_HIDE = "⬆️ Hide"
 
-# --- Bot Commands ---
 BOT_COMMANDS = [
     ("plank", "⏱ New plank record"),
     ("yoga", "🧘‍♀️ Schedule a session"),
@@ -198,6 +163,5 @@ BOT_COMMANDS = [
     ("graph", "📈 Progress graph"),
 ]
 
-# --- Logging ---
 LOG_LEVEL = "INFO"
 LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"

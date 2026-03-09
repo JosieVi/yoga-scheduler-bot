@@ -11,7 +11,7 @@ from aiogram.types import BufferedInputFile, Message
 from config import (
     PLANK_INITIAL_SECONDS,
     PLANK_MIN_SECONDS,
-    PLANK_MOTIVATION,
+    PLANK_MOTIVATION_OPTIONS,
     PLANK_TEXT_CHALLENGE_TITLE,
     PLANK_TEXT_DELETE_ERROR,
     PLANK_TEXT_DELETE_NONE,
@@ -169,20 +169,27 @@ async def process_plank_final(
 
     last_id = await save_plank_result(user_id, username, duration_sec)
 
-    note = random.choice(PLANK_MOTIVATION)
+    motivation_dict = random.choice(PLANK_MOTIVATION_OPTIONS)
     final_text = PLANK_TEXT_PLANK_COMPLETED.format(
         user_name=user_name,
         result=result,
         date=date_today,
-        note=note,
+        note=motivation_dict["caption"],
     )
 
     await state.clear()
-    await callback.message.edit_text(
-        final_text,
+    await callback.message.delete()
+    await callback.message.answer_photo(
+        photo=motivation_dict["image"],
+        caption=final_text,
         reply_markup=get_plank_result_keyboard(last_id),
         parse_mode="Markdown",
     )
+    # await callback.message.edit_text(
+    #     final_text,
+    #     reply_markup=get_plank_result_keyboard(last_id),
+    #     parse_mode="Markdown",
+    # )
     await callback.answer("Result saved!")
 
 
@@ -285,3 +292,9 @@ async def send_graph(message: types.Message):
         await message.answer_photo(photo, caption=PLANK_TEXT_GRAPH_CAPTION)
     else:
         await message.answer(PLANK_TEXT_GRAPH_ERROR)
+
+
+# @plank_router.message(F.photo)
+# async def catch_photo_id(message: types.Message):
+#     photo_id = message.photo[-1].file_id
+#     await message.reply(f"`{photo_id}`", parse_mode="Markdown")

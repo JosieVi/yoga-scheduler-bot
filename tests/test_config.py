@@ -7,7 +7,7 @@ from config import (
     PLANK_MIN_SECONDS,
     PLANK_INITIAL_SECONDS,
     BOT_COMMANDS,
-    PLANK_MOTIVATION,
+    PLANK_MOTIVATION_OPTIONS,
 )
 
 
@@ -45,5 +45,20 @@ def test_bot_commands_structure():
 
 
 def test_motivation_messages():
-    assert len(PLANK_MOTIVATION) > 0
-    assert all(msg.strip() for msg in PLANK_MOTIVATION)
+    assert len(PLANK_MOTIVATION_OPTIONS) > 0, "Motivation options list is empty"
+
+    for option in PLANK_MOTIVATION_OPTIONS:
+        # Проверяем, что элемент является словарем
+        assert isinstance(option, dict), "Motivation option must be a dictionary"
+
+        # Проверяем наличие нужных ключей
+        assert "image" in option, "Motivation option missing 'image' key"
+        assert "caption" in option, "Motivation option missing 'caption' key"
+
+        # Проверяем, что значения не пустые строки
+        assert (
+            isinstance(option["image"], str) and option["image"].strip()
+        ), "Image value must be a non-empty string"
+        assert (
+            isinstance(option["caption"], str) and option["caption"].strip()
+        ), "Caption value must be a non-empty string"
