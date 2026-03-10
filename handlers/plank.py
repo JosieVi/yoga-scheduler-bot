@@ -292,9 +292,3 @@ async def send_graph(message: types.Message):
         await message.answer_photo(photo, caption=PLANK_TEXT_GRAPH_CAPTION)
     else:
         await message.answer(PLANK_TEXT_GRAPH_ERROR)
-
-
-# @plank_router.message(F.photo)
-# async def catch_photo_id(message: types.Message):
-#     photo_id = message.photo[-1].file_id
-#     await message.reply(f"`{photo_id}`", parse_mode="Markdown")
