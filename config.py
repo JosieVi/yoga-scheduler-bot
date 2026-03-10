@@ -7,7 +7,6 @@ DEFAULT_SLOTS_UTC = [
     "05:40",
     "06:00",
     "06:30",
-    "06:40",
     "16:30",
     "17:00",
     "17:30",
@@ -116,8 +115,18 @@ PLANK_MOTIVATION_OPTIONS = [
         "image": "AgACAgIAAxkBAAIDKGmvP7fSwJMTklZU53IRrCk5njXXAAIXHWsb8Pd4SYj_yeqb6fUTAQADAgADeQADOgQ",
         "caption": "Abs of steel officially activated. 💎",
     },
-    # {"image": "images/shake.png", "caption": "Earthquake? No, just your muscles! ⚡"},
-    # {"image": "images/rest.png", "caption": "Horizontal hero. Now go rest! 🛌"}
+    {
+        "image": "AgACAgIAAxkBAAIDbmmvxRYIe9ZMDiZwIJnvPjAIQJSIAAIPFmsbCsiASSHpNlREPhyHAQADAgADeQADOgQ",
+        "caption": "Earthquake? No, just your muscles! ⚡",
+    },
+    {
+        "image": "AgACAgIAAxkBAAIDcmmvxSjRtDJl7carwKcPT5sL5SYVAAIRFmsbCsiASZBz8shB-kIgAQADAgADeQADOgQ",
+        "caption": "Horizontal hero. Now go rest! 🛌",
+    },
+    {
+        "image": "AgACAgIAAxkBAAIDdGmvxTMLKevt2k1lxZ3qyK_Ntp9WAAITFmsbCsiASWc15jKpn1IVAQADAgADeQADOgQ",
+        "caption": "Plank master in the making! 💪",
+    },
 ]
 
 PLANK_TEXT_USERNAME_REQUIRED = "❌ Set a Username in Telegram!"
