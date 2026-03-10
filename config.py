@@ -7,6 +7,7 @@ DEFAULT_SLOTS_UTC = [
     "05:40",
     "06:00",
     "06:30",
+    "16:00",
     "16:30",
     "17:00",
     "17:30",
@@ -126,6 +127,14 @@ PLANK_MOTIVATION_OPTIONS = [
     {
         "image": "AgACAgIAAxkBAAIDdGmvxTMLKevt2k1lxZ3qyK_Ntp9WAAITFmsbCsiASWc15jKpn1IVAQADAgADeQADOgQ",
         "caption": "Plank master in the making! 💪",
+    },
+    {
+        "image": "AgACAgIAAxkBAAIDe2mwiMvbdJgMYiGezyVVUAfvDge6AAJpFWsbCsiISRkv9Hciqyj0AQADAgADeQADOgQ",
+        "caption": "You're not just planking, you're performing! 🌟",
+    },
+    {
+        "image": "AgACAgIAAxkBAAIDfWmwiNbkGRGhQ5ZcqbPC2AABmE2imgACahVrGwrIiEl8DJQ3X8oBMAEAAwIAA3kAAzoE",
+        "caption": "Plank level: Expert. Your core is unbreakable! 🏋️‍♂️",
     },
 ]
 
