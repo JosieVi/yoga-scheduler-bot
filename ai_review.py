@@ -1,17 +1,17 @@
 import os
 from google import genai
 
-# Инициализация нового клиента
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 
 def review_code():
-    # Читаем твой основной файл бота
     try:
         with open("main.py", "r", encoding="utf-8") as f:
             code = f.read()
     except FileNotFoundError:
-        print("Ошибка: файл main.py не найден!")
+        print(
+            "Error: 'main.py' not found. Please ensure the file exists in the current directory."
+        )
         return
 
     prompt = f"""
@@ -24,7 +24,9 @@ def review_code():
     {code}
     """
 
-    response = client.models.generate_content(model="gemini-1.5-flash", contents=prompt)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash-latest", contents=prompt
+    )
 
     print("--- AI CODE REVIEW RESULTS ---")
     print(response.text)
