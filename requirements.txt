@@ -3,3 +3,4 @@ python-dotenv
 aiosqlite
 matplotlib
 pytest-asyncio
+google-genai
