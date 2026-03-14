@@ -24,9 +24,7 @@ def review_code():
     {code}
     """
 
-    response = client.models.generate_content(
-        model="gemini-2.0-flash-latest", contents=prompt
-    )
+    response = client.models.generate_content(model="gemini-2.5-flash", contents=prompt)
 
     print("--- AI CODE REVIEW RESULTS ---")
     print(response.text)
