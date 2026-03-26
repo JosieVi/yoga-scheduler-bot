@@ -54,11 +54,11 @@ def get_plank_slider_keyboard(
     return builder.as_markup()
 
 
-def get_plank_result_keyboard(record_id: int) -> types.InlineKeyboardMarkup:
+def get_plank_result_keyboard(record_ids: str) -> types.InlineKeyboardMarkup:
     """Build keyboard shown after saving plank result."""
     builder = InlineKeyboardBuilder()
-    builder.button(text=PLANK_BTN_DELETE, callback_data=f"cancel_plank:{record_id}")
-    builder.button(text=PLANK_BTN_BACK, callback_data=f"back_to_plank:{record_id}")
+    builder.button(text=PLANK_BTN_DELETE, callback_data=f"cancel_plank:{record_ids}")
+    builder.button(text=PLANK_BTN_BACK, callback_data=f"back_to_plank:{record_ids}")
     builder.adjust(2)
     return builder.as_markup()
 

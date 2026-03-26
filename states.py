@@ -6,4 +6,5 @@ class YogaState(StatesGroup):
 
 
 class PlankState(StatesGroup):
+    choosing_sets = State()
     adjusting = State()

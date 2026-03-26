@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 from db.database import init_db
 from config import BOT_COMMANDS, LOG_LEVEL, LOG_FORMAT
 
-from aiogram import Bot, Dispatcher, F
+from aiogram import Bot, Dispatcher
 from aiogram.filters import Command
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Message, BotCommand
@@ -56,26 +56,26 @@ dp.include_router(yoga_router)
 dp.include_router(plank_router)
 
 
-@dp.message(F.photo)
-async def catch_photo_id(message: Message, yoga_users_map: dict):
-    if not validate_user(message):
-        await message.answer("❌ Set a Username in Telegram!")
-        return
+# @dp.message(F.photo)
+# async def catch_photo_id(message: Message, yoga_users_map: dict):
+#     if not validate_user(message):
+#         await message.answer("❌ Set a Username in Telegram!")
+#         return
 
-    user_keys = list(yoga_users_map.keys())
-    admin_username = user_keys[0] if user_keys else ""
+#     user_keys = list(yoga_users_map.keys())
+#     admin_username = user_keys[0] if user_keys else ""
 
-    current_username = (
-        message.from_user.username.lower()
-        if message.from_user and message.from_user.username
-        else ""
-    )
+#     current_username = (
+#         message.from_user.username.lower()
+#         if message.from_user and message.from_user.username
+#         else ""
+#     )
 
-    if current_username == admin_username:
-        photo_id = message.photo[-1].file_id
-        await message.reply(f"`{photo_id}`", parse_mode="Markdown")
-    else:
-        await message.answer("🚫 You don't have permission to shut down the bot.")
+#     if current_username == admin_username:
+#         photo_id = message.photo[-1].file_id
+#         await message.reply(f"`{photo_id}`", parse_mode="Markdown")
+#     else:
+#         await message.answer("🚫 You don't have permission to shut down the bot.")
 
 
 @dp.message(Command("shutdown"))
