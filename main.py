@@ -6,20 +6,20 @@ from dotenv import load_dotenv
 from db.database import init_db
 from config import BOT_COMMANDS, LOG_LEVEL, LOG_FORMAT
 
-from aiogram import Bot, Dispatcher
-from aiogram.filters import Command
+from aiogram import F, types, Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.types import Message, BotCommand
+from aiogram.types import BotCommand
 
 from middlewares import AccessMiddleware
 from handlers.yoga import yoga_router
 from handlers.plank import plank_router
-from utils import validate_user
 
 load_dotenv()
 API_TOKEN = os.getenv("BOT_TOKEN")
 if not API_TOKEN:
     raise ValueError("BOT_TOKEN not found!")
+
+ADMIN_ID = int(os.getenv("ADMIN_ID", 0))
 
 
 def load_users(filename: str) -> dict:
@@ -56,52 +56,11 @@ dp.include_router(yoga_router)
 dp.include_router(plank_router)
 
 
-# @dp.message(F.photo)
-# async def catch_photo_id(message: Message, yoga_users_map: dict):
-#     if not validate_user(message):
-#         await message.answer("❌ Set a Username in Telegram!")
-#         return
-
-#     user_keys = list(yoga_users_map.keys())
-#     admin_username = user_keys[0] if user_keys else ""
-
-#     current_username = (
-#         message.from_user.username.lower()
-#         if message.from_user and message.from_user.username
-#         else ""
-#     )
-
-#     if current_username == admin_username:
-#         photo_id = message.photo[-1].file_id
-#         await message.reply(f"`{photo_id}`", parse_mode="Markdown")
-#     else:
-#         await message.answer("🚫 You don't have permission to shut down the bot.")
-
-
-@dp.message(Command("shutdown"))
-async def cmd_shutdown(message: Message, yoga_users_map: dict):
-    """Shut down the bot if the caller is the configured admin."""
-    if not validate_user(message):
-        await message.answer("❌ Set a Username in Telegram!")
-        return
-
-    user_keys = list(yoga_users_map.keys())
-    admin_username = user_keys[0] if user_keys else ""
-
-    current_username = (
-        message.from_user.username.lower()
-        if message.from_user and message.from_user.username
-        else ""
-    )
-
-    if current_username == admin_username:
-        await message.answer("🛑 Bot shut down.")
-        logger.info("Bot shutdown initiated by admin: %s", current_username)
-        await bot.session.close()
-        await dp.stop_polling()
-        os._exit(0)
-    else:
-        await message.answer("🚫 You don't have permission to shut down the bot.")
+@dp.message(F.photo)
+@plank_router.message(F.photo, F.from_user.id == ADMIN_ID)
+async def catch_photo_id(message: types.Message):
+    photo_id = message.photo[-1].file_id
+    await message.reply(f"`{photo_id}`", parse_mode="Markdown")
 
 
 async def main():
