@@ -22,10 +22,6 @@ from config import (
     PLANK_TEXT_GRAPH_NO_DATA,
     PLANK_TEXT_NO_DATA,
     PLANK_TEXT_PLANK_COMPLETED,
-    PLANK_TEXT_STATS_HEADER,
-    PLANK_TEXT_STATS_MONTH_TITLE,
-    PLANK_TEXT_STATS_TAGLINE,
-    PLANK_TEXT_STATS_WEEK_TITLE,
     PLANK_TEXT_TOO_FAST,
     PLANK_TEXT_USERNAME_REQUIRED,
 )
@@ -39,13 +35,13 @@ from db.database import (
 from states import PlankState
 from utils import (
     convert_utc_to_local,
-    format_time,
     format_time_compact,
     get_user_offset,
     to_seconds,
     validate_user,
 )
 from views.plank import (
+    _build_stats_text,
     generate_progress_graph,
     get_plank_progress_text,
     get_plank_result_keyboard,
@@ -58,28 +54,6 @@ from views.plank import (
 logger = logging.getLogger(__name__)
 
 plank_router = Router()
-
-
-def _build_stats_text(data: dict) -> str:
-    """Format plank statistics for 7 and 30 days."""
-    week = data[7]
-    month = data[30]
-
-    week_block = (
-        f" • Total time: <code>{format_time(week['total'])}</code>\n"
-        f" • Attempts: <code>{week['count']}</code>\n"
-        f" • Average: <code>{format_time(week['avg'])}</code>\n"
-        f" • Best: <code>{format_time(week['max'])}</code> 🏆\n\n"
-    )
-
-    month_block = (
-        f" • Total time: <code>{format_time(month['total'])}</code>\n"
-        f" • Attempts: <code>{month['count']}</code>\n"
-        f" • Average: <code>{format_time(month['avg'])}</code>\n"
-        f" • Best: <code>{format_time(month['max'])}</code> 🦁\n\n"
-    )
-
-    return f"{PLANK_TEXT_STATS_HEADER}{PLANK_TEXT_STATS_WEEK_TITLE}{week_block}{PLANK_TEXT_STATS_MONTH_TITLE}{month_block}{PLANK_TEXT_STATS_TAGLINE}"
 
 
 @plank_router.message(Command("plank"))
