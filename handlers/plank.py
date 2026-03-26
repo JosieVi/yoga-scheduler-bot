@@ -47,10 +47,12 @@ from utils import (
 )
 from views.plank import (
     generate_progress_graph,
+    get_plank_progress_text,
     get_plank_result_keyboard,
     get_plank_slider_keyboard,
     get_plank_stats_details_keyboard,
     get_plank_stats_keyboard,
+    get_sets_keyboard,
 )
 
 logger = logging.getLogger(__name__)
@@ -97,13 +99,14 @@ async def cmd_plank(message: Message, state: FSMContext):
     await message.answer(
         "How many sets did you do? (1-5)",
         parse_mode="Markdown",
-        reply_markup=builder.as_markup(),
+        reply_markup=get_sets_keyboard(),
     )
 
 
 @plank_router.callback_query(PlankState.choosing_sets, F.data.startswith("sets_"))
 async def process_sets_selection(callback: types.CallbackQuery, state: FSMContext):
     total_sets = int(callback.data.split("_")[1])
+    current_set = 1
 
     await state.update_data(
         total_sets=total_sets,
@@ -113,10 +116,11 @@ async def process_sets_selection(callback: types.CallbackQuery, state: FSMContex
     )
     await state.set_state(PlankState.adjusting)
 
-    title_text = PLANK_TEXT_CHALLENGE_TITLE.format(
-        user_name=callback.from_user.first_name
+    msg_text = get_plank_progress_text(
+        user_name=callback.from_user.first_name,
+        current_set=current_set,
+        total_sets=total_sets,
     )
-    msg_text = f"{title_text}\n\n*Set 1 of {total_sets}*"
 
     await callback.message.edit_text(
         msg_text,
@@ -126,40 +130,7 @@ async def process_sets_selection(callback: types.CallbackQuery, state: FSMContex
     await callback.answer()
 
 
-# async def cmd_plank(message: Message, state: FSMContext):
-#     """Start plank challenge and show time slider."""
-#     if not validate_user(message):
-#         await message.answer(PLANK_TEXT_USERNAME_REQUIRED)
-#         return
-
-#     await state.set_state(PlankState.adjusting)
-#     await state.update_data(current_seconds=PLANK_INITIAL_SECONDS)
-
-#     await message.answer(
-#         PLANK_TEXT_CHALLENGE_TITLE.format(user_name=message.from_user.first_name),
-#         reply_markup=get_plank_slider_keyboard(PLANK_INITIAL_SECONDS),
-#         parse_mode="Markdown",
-#     )
-
-
 @plank_router.callback_query(F.data.startswith("cancel_plank:"))
-# async def process_cancel_plank(callback: types.CallbackQuery):
-#     try:
-#         record_id = int(callback.data.split(":")[1])
-
-#         if record_id > 0:
-#             await delete_plank_result(record_id)
-#             await callback.answer(PLANK_TEXT_DELETE_SUCCESS)
-#         else:
-#             await callback.answer(PLANK_TEXT_DELETE_NONE, show_alert=True)
-
-#         await callback.message.delete()
-#     except (TelegramBadRequest, TelegramRetryAfter, ValueError, IndexError) as exc:
-#         logger.debug(
-#             "Failed to cancel plank entry for payload %s: %s", callback.data, exc
-#         )
-#         await callback.answer(PLANK_TEXT_DELETE_ERROR)
-
 async def process_cancel_plank(callback: types.CallbackQuery):
     try:
         records_str = callback.data.split(":")[1]
@@ -234,10 +205,11 @@ async def process_plank_final(
             results=results,
         )
 
-        title_text = PLANK_TEXT_CHALLENGE_TITLE.format(
-            user_name=callback.from_user.first_name
+        msg_text = get_plank_progress_text(
+            user_name=callback.from_user.first_name,
+            current_set=current_set,
+            total_sets=total_sets,
         )
-        msg_text = f"{title_text}\n\n*Set {current_set} of {total_sets}*"
 
         await callback.message.edit_text(
             msg_text,
@@ -258,7 +230,6 @@ async def process_plank_final(
     user_time = convert_utc_to_local(now_utc, user_offset)
     date_today = user_time.strftime("%d.%m.%Y")
 
-    # Сохраняем каждый подход в БД и собираем их ID
     saved_ids = []
     total_duration = 0
     for res_sec in results:
@@ -266,7 +237,6 @@ async def process_plank_final(
         saved_ids.append(str(record_id))
         total_duration += res_sec
 
-    # Склеиваем ID через запятую (например: "15,16,17")
     joined_ids = ",".join(saved_ids)
     total_mins = total_duration // 60
     total_secs = total_duration % 60
@@ -293,44 +263,6 @@ async def process_plank_final(
         parse_mode="Markdown",
     )
     await callback.answer("All sets saved! Great job!")
-
-
-# @plank_router.callback_query(F.data.startswith("plank_final_"))
-# async def process_plank_final(
-#     callback: types.CallbackQuery, state: FSMContext, plank_users_map: dict
-# ):
-#     """Finalize plank result and show summary.    """
-#     result = callback.data.split("_")[2]
-#     duration_sec = to_seconds(result)
-#     username = (
-#         callback.from_user.username.lower() if callback.from_user.username else ""
-#     )
-#     user_name = callback.from_user.first_name
-#     user_id = callback.from_user.id
-
-#     user_offset = get_user_offset(username, plank_users_map)
-#     now_utc = datetime.now(timezone.utc)
-#     user_time = convert_utc_to_local(now_utc, user_offset)
-#     date_today = user_time.strftime("%d.%m.%Y")
-
-#     last_id = await save_plank_result(user_id, username, duration_sec)
-
-#     motivation_dict = random.choice(PLANK_MOTIVATION_OPTIONS)
-#     final_text = PLANK_TEXT_PLANK_COMPLETED.format(
-#         user_name=user_name,
-#         result=result,
-#         date=date_today,
-#         note=motivation_dict["caption"],
-#     )
-
-#     await state.clear()
-#     await callback.message.delete()
-#     await callback.message.answer_photo(
-#         photo=motivation_dict["image"],
-#         caption=final_text,
-#         reply_markup=get_plank_result_keyboard(last_id),
-#         parse_mode="Markdown",
-#     await callback.answer("Result saved!")
 
 
 @plank_router.callback_query(F.data == "ignore")

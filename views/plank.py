@@ -11,10 +11,25 @@ from utils import format_time
 from config import (
     PLANK_BTN_CONFIRM,
     PLANK_BTN_DELETE,
-    PLANK_BTN_BACK,
     PLANK_BTN_DETAILS,
     PLANK_BTN_HIDE,
+    PLANK_TEXT_CHALLENGE_TITLE,
 )
+
+
+def get_sets_keyboard(max_sets: int = 5):
+    """Build inline keyboard for selecting number of plank sets."""
+    builder = InlineKeyboardBuilder()
+    for i in range(1, max_sets + 1):
+        builder.button(text=str(i), callback_data=f"sets_{i}")
+    builder.adjust(5)
+    return builder.as_markup()
+
+
+def get_plank_progress_text(user_name: str, current_set: int, total_sets: int) -> str:
+    """Get progress text for plank challenge."""
+    title = PLANK_TEXT_CHALLENGE_TITLE.format(user_name=user_name)
+    return f"{title}\n\n*Подход {current_set} из {total_sets}*"
 
 
 def get_plank_slider_keyboard(
@@ -25,20 +40,17 @@ def get_plank_slider_keyboard(
 
     time_str = format_time(seconds)
 
-    # Row 1: Fine-tuning (5 sec)
     builder.row(
         types.InlineKeyboardButton(text="➖ 5s", callback_data="plank_adj_-5"),
         types.InlineKeyboardButton(text=f"⏱ {time_str}", callback_data="ignore"),
         types.InlineKeyboardButton(text="➕ 5s", callback_data="plank_adj_5"),
     )
 
-    # Row 2: Quick adjustment (10 sec)
     builder.row(
         types.InlineKeyboardButton(text="➖ 10s", callback_data="plank_adj_-10"),
         types.InlineKeyboardButton(text="➕ 10s", callback_data="plank_adj_10"),
     )
 
-    # Row 3: Controls
     delete_callback_data = (
         f"cancel_plank:{record_id}" if record_id else "cancel_plank:0"
     )
@@ -58,8 +70,7 @@ def get_plank_result_keyboard(record_ids: str) -> types.InlineKeyboardMarkup:
     """Build keyboard shown after saving plank result."""
     builder = InlineKeyboardBuilder()
     builder.button(text=PLANK_BTN_DELETE, callback_data=f"cancel_plank:{record_ids}")
-    builder.button(text=PLANK_BTN_BACK, callback_data=f"back_to_plank:{record_ids}")
-    builder.adjust(2)
+    builder.adjust(1)
     return builder.as_markup()
 
 
@@ -89,7 +100,6 @@ def generate_progress_graph(points: list[tuple[datetime, int]]) -> io.BytesIO | 
     if not points:
         return None
 
-    # Enable headless backend for server usage
     plt.switch_backend("Agg")
 
     timestamps, durations = zip(*points)
