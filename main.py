@@ -57,7 +57,7 @@ dp.include_router(plank_router)
 
 
 @dp.message(F.photo)
-@plank_router.message(F.photo, F.caption == "ФОТО", F.from_user.id == ADMIN_ID)
+@plank_router.message(F.photo)
 async def catch_photo_id(message: types.Message):
     photo_id = message.photo[-1].file_id
     await message.reply(f"`{photo_id}`", parse_mode="Markdown")
