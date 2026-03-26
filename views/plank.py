@@ -14,6 +14,10 @@ from config import (
     PLANK_BTN_DETAILS,
     PLANK_BTN_HIDE,
     PLANK_TEXT_CHALLENGE_TITLE,
+    PLANK_TEXT_STATS_HEADER,
+    PLANK_TEXT_STATS_MONTH_TITLE,
+    PLANK_TEXT_STATS_TAGLINE,
+    PLANK_TEXT_STATS_WEEK_TITLE,
 )
 
 
@@ -64,6 +68,28 @@ def get_plank_slider_keyboard(
         ),
     )
     return builder.as_markup()
+
+
+def _build_stats_text(data: dict) -> str:
+    """Format plank statistics for 7 and 30 days."""
+    week = data[7]
+    month = data[30]
+
+    week_block = (
+        f" • Total time: <code>{format_time(week['total'])}</code>\n"
+        f" • Attempts: <code>{week['count']}</code>\n"
+        f" • Average: <code>{format_time(week['avg'])}</code>\n"
+        f" • Best: <code>{format_time(week['max'])}</code> 🏆\n\n"
+    )
+
+    month_block = (
+        f" • Total time: <code>{format_time(month['total'])}</code>\n"
+        f" • Attempts: <code>{month['count']}</code>\n"
+        f" • Average: <code>{format_time(month['avg'])}</code>\n"
+        f" • Best: <code>{format_time(month['max'])}</code> 🦁\n\n"
+    )
+
+    return f"{PLANK_TEXT_STATS_HEADER}{PLANK_TEXT_STATS_WEEK_TITLE}{week_block}{PLANK_TEXT_STATS_MONTH_TITLE}{month_block}{PLANK_TEXT_STATS_TAGLINE}"
 
 
 def get_plank_result_keyboard(record_ids: str) -> types.InlineKeyboardMarkup:
