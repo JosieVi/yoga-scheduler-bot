@@ -4,6 +4,8 @@ DB_NAME = "yoga_community.db"
 
 MIN_PARTICIPANTS = 2
 DEFAULT_SLOTS_UTC = [
+    "15:00",
+    "15:30",
     "16:00",
     "16:30",
     "17:00",
