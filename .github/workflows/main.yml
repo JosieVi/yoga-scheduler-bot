@@ -39,10 +39,10 @@ jobs:
       - name: Install AI dependencies
         run: pip install google-generativeai
 
-      - name: Run AI Code Review
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python ai_review.py
+      # - name: Run AI Code Review
+      #   env:
+      #     GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      #   run: python ai_review.py
 
   deploy:
     needs: tests
