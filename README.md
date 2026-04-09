@@ -286,3 +286,106 @@ schedule-bot/
 ---
 
 **Have a productive workout!** 🧘‍♂️💪
+
+---
+
+# Deploying a Telegram Bot on Google Cloud (Debian/Ubuntu) via GitHub Actions
+
+This guide describes the process of deploying a bot on a fresh Google Cloud Platform (GCP) server with CI/CD setup via GitHub Actions.
+
+## 1. Creating an Instance on Google Cloud
+
+1. Go to Google Cloud Console -> **Compute Engine** -> **VM instances**.
+2. Click **Create instance**.
+3. Choose a region and machine type (e.g., `e2-micro` for a basic bot).
+4. In the **Boot disk** section, select your OS (Debian 12 or Ubuntu 22.04+ is recommended).
+5. In the **Firewall** section, check the boxes to allow HTTP and HTTPS traffic.
+6. Click **Create** and wait for the External IP address to be assigned.
+
+## 2. Configuring SSH Keys for CI/CD
+
+To enable automatic deployment, you need to securely connect GitHub and your server using SSH keys.
+
+1. Generate a key pair on your local machine:
+   `ssh-keygen -t ed25519 -f ./github_deploy_key -C "your_server_username"`
+2. **Server Setup:** Copy the contents of the public key (`github_deploy_key.pub`). In Google Cloud, open your instance settings, click **Edit**, scroll down to **Security and access** -> **SSH Keys**, and paste the copied key.
+3. **GitHub Setup:** Copy the contents of the private key (`github_deploy_key`). In your GitHub repository, go to **Settings** -> **Secrets and variables** -> **Actions**.
+   Create the following repository secrets:
+   - `HOST` — the external IP address of your server.
+   - `USERNAME` — your server username.
+   - `SSH_KEY` — the exact contents of the private key.
+
+## 3. Preparing the Server Environment
+
+Connect to your server via SSH to install basic packages, create the project directory, and set up Git:
+
+```bash
+sudo apt update
+sudo apt install git python3-venv python3-pip -y
+
+mkdir bot-project
+cd bot-project
+
+python3 -m venv venv
+git init
+git remote add origin https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPOSITORY.git
+```
+
+## 4. Initial File Download and Dependency Installation
+
+Pull the code from your main branch (e.g., `main`). To install Python packages on newer versions of Debian/Ubuntu, use the absolute path to `pip` inside your virtual environment to bypass the `externally-managed-environment` restriction:
+
+```bash
+git fetch --all
+git reset --hard origin/main
+/home/your_username/bot-project/venv/bin/python3 -m pip install -r requirements.txt
+```
+
+## 5. Creating Local Files (.env, Database, JSON)
+
+Sensitive data and state files should never be stored in Git. You need to create them manually in your project folder on the server:
+
+1. Create the environment variables file:
+   `nano .env`
+   _(Paste your tokens here, e.g., `BOT_TOKEN=12345...`)_
+2. Create necessary data files (if your bot requires them on startup). For example, to create an empty, valid JSON file:
+   `echo "{}" > users.json`
+3. If you have an existing database file (e.g., SQLite), upload it directly to the project folder.
+
+## 6. Setting Up the System Service (systemd)
+
+To keep the bot running in the background and ensure it starts automatically on server reboot, create a systemd service file:
+
+`sudo nano /etc/systemd/system/bot_service.service`
+
+Paste the configuration below, replacing `your_username` and `bot-project` with your actual setup details:
+
+```ini
+[Unit]
+Description=Telegram Bot Service
+After=network.target
+
+[Service]
+User=your_username
+WorkingDirectory=/home/your_username/bot-project
+ExecStart=/home/your_username/bot-project/venv/bin/python3 /home/your_username/bot-project/main.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+## 7. Starting the Service
+
+Apply the new configurations and start the bot with these commands:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable bot_service
+sudo systemctl start bot_service
+```
+
+You can check the active status of your bot by running `sudo systemctl status bot_service`, and view real-time logs using `sudo journalctl -u bot_service -f`.
+
+---
